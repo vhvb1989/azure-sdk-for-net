@@ -1,6 +1,10 @@
 variables:
   - template: /eng/pipelines/templates/variables/globals.yml
 
+parameters:
+  - name: Nightly
+    default: true
+
 jobs:
   - job: SmokeTest
 
@@ -68,7 +72,7 @@ jobs:
         inputs:
           targetType: filePath
           filePath: ./common/SmokeTests/SmokeTest/Update-Dependencies.ps1
-          arguments: -CI
+          arguments: -CI -Nightly ${{ parameters.Nightly }}
           workingDirectory: common/SmokeTests/SmokeTest
           pwsh: true
         displayName: Use latest dev feed package versions
