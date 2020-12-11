@@ -165,7 +165,7 @@ stages:
                           PRBranchName: onboarding-${{artifact.name}}-$(Build.BuildId)
                           ArtifactName: ${{artifact.name}}
                           Language: '.net'
-                          DocRepoDestinationPath: 'api/overview/azure/' 
+                          DocRepoDestinationPath: 'api/overview/azure/'
                           GHReviewersVariable: 'OwningGHUser'
                           CIConfigs: $(CIConfigs)
                           OnboardingBranch: 'onboarding'
@@ -222,6 +222,28 @@ stages:
                           PRTitle: "Increment version for ${{ parameters.ServiceDirectory }} releases"
                           PRLabels: "auto-merge"
                           CloseAfterOpenForTesting: '${{ parameters.TestPipeline }}'
+
+          - job: Check smoke test eligibility
+            pwsh: |
+              $deps = (Select-Xml -Path /common/SmokeTests/SmokeTest/SmokeTest.csproj `
+                                  -Xpath //ItemGroup/PackageReference/@Include).Node.Value
+              if ($dependencies.Contains("${{ artifact.safeName }}")) {
+                Write-Host "Smoke tests will run for ${{ artifact.safeName }}"
+                Write-Host "##vso[task.setvariable variable=RunSmokeTests]true"
+              } else {
+                Write-Host "Smoke tests will NOT run for ${{ artifact.safeName }}"
+              }
+            displayName: Check smoke test eligibility
+
+  - stage: Smoke Test Release Packages
+    condition: eq(variables['RunSmokeTests'], 'true')
+    dependsOn:
+      - ${{ each artifact in parameters.Artifacts }}:
+        - Release_${{artifact.safeName}}
+    jobs:
+      - template: /eng/pipelines/templates/jobs/smoke-tests.yml
+        parameters:
+          Nightly: false
 
   - stage: Integration
     dependsOn: Signing
