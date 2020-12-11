@@ -11,13 +11,13 @@ stages:
       - stage: Release_${{artifact.safeName}}
         displayName: 'Release: ${{artifact.name}}'
         jobs:
-          - job: Test Noop
+          - job: Test_Noop
             displayName: Test NOOP
             steps:
               - pwsh: echo foo
                 displayName: Test NOOP
 
-          - job: Check smoke test eligibility
+          - job: check_smoke_test
             displayName: Check smoke test eligibility
             steps:
               - pwsh: |
@@ -31,7 +31,7 @@ stages:
                   }
                 displayName: Check smoke test eligibility
 
-  - stage: Smoke Test Release Packages
+  - stage: SmokeTest_Release_Packages
     condition: eq(variables['RunSmokeTests'], 'true')
     dependsOn:
       - ${{ each artifact in parameters.Artifacts }}:
