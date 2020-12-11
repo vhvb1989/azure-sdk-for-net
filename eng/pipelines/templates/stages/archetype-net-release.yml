@@ -11,15 +11,6 @@ stages:
       - stage: Release_${{artifact.safeName}}
         displayName: 'Release: ${{artifact.name}}'
         jobs:
-          - job: Fake_Release
-            displayName: Fake Release ${{ artifact.name }} ${{ artifact.safeName }}
-            steps:
-              - pwsh: echo foo
-                displayName: Test NOOP
-
-      - stage: Release_${{artifact.safeName}}
-        displayName: 'Release: ${{artifact.name}}'
-        jobs:
           - job: Test_Noop
             displayName: Test NOOP
             steps:
