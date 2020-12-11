@@ -17,10 +17,22 @@ jobs:
   # switch is a workaround to support specifying host type.
   - template: ./archetype-sdk-tests-jobs.yml
     parameters:
+      Use1ESPool: false
       UsePlatformContainer: false
       Platforms:
         ${{ each platform in parameters.Platforms }}:
-          ${{ if not(platform.value.Container) }}:
+          ${{ if and(not(platform.value.Container), not(platform.value.Pool)) }}:
+            ${{ platform.key }}: ${{ platform.value }}
+      CloudConfig: ${{ parameters.CloudConfig }}
+      ${{ each param in parameters.AdditionalParameters }}:
+        ${{ param.key }}: ${{ param.value }}
+  - template: ./archetype-sdk-tests-jobs.yml
+    parameters:
+      Use1ESPool: true
+      UsePlatformContainer: false
+      Platforms:
+        ${{ each platform in parameters.Platforms }}:
+          ${{ if platform.value.Pool }}:
             ${{ platform.key }}: ${{ platform.value }}
       CloudConfig: ${{ parameters.CloudConfig }}
       ${{ each param in parameters.AdditionalParameters }}:
@@ -30,6 +42,7 @@ jobs:
   - ${{ if eq(parameters.UsePlatformContainer, 'true') }}:
     - template: ./archetype-sdk-tests-jobs.yml
       parameters:
+        Use1ESPool: false
         UsePlatformContainer: true
         Platforms:
           ${{ each platform in parameters.Platforms }}:

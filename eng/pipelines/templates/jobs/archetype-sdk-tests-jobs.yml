@@ -35,6 +35,9 @@ parameters:
 - name: UsePlatformContainer
   type: boolean
   default: false
+- name: Use1ESPool
+  type: boolean
+  default: false
 
 jobs:
   - job:
@@ -57,10 +60,12 @@ jobs:
     timeoutInMinutes: ${{ parameters.TimeoutInMinutes }}
 
     pool:
-      name: $(Pool)
-      vmImage: $(OSVmImage)
+      ${{ if eq(parameters.Use1ESPool, true) }}:
+        name: $[ variables['Pool'] ]
+      ${{ if eq(parameters.Use1ESPool, false) }}:
+        vmImage: $(OSVmImage)
 
-    ${{ if eq(parameters.UsePlatformContainer, 'true') }}:
+    ${{ if eq(parameters.UsePlatformContainer, true) }}:
       container: $[ variables['Container'] ]
 
     steps:
