@@ -11,6 +11,15 @@ stages:
       - stage: Release_${{artifact.safeName}}
         displayName: 'Release: ${{artifact.name}}'
         jobs:
+          - job: Fake_Release
+            displayName: Fake Release ${{ artifact.name }} ${{ artifact.safeName }}
+            steps:
+              - pwsh: echo foo
+                displayName: Test NOOP
+
+      - stage: Release_${{artifact.safeName}}
+        displayName: 'Release: ${{artifact.name}}'
+        jobs:
           - job: Test_Noop
             displayName: Test NOOP
             steps:
@@ -23,7 +32,7 @@ stages:
               - pwsh: |
                   $deps = (Select-Xml -Path /common/SmokeTests/SmokeTest/SmokeTest.csproj `
                                       -Xpath //ItemGroup/PackageReference/@Include).Node.Value
-                  if ($dependencies.Contains("${{ artifact.safeName }}")) {
+                  if ($dependencies.Contains("${{ artifact.name }}")) {
                     Write-Host "Smoke tests will run for ${{ artifact.safeName }}"
                     Write-Host "##vso[task.setvariable variable=RunSmokeTests]true"
                   } else {
