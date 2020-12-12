@@ -37,26 +37,26 @@ function Log-Warning($message) {
     }
 }
 
+function GetAllNightlyPackages {
+    Register-PackageSource `
+        -Name $NIGHTLY_FEED_NAME `
+        -Location $NIGHTLY_FEED_URL `
+        -ProviderName Nuget `
+        -ErrorAction SilentlyContinue `
+
+    # List all packages from the source specified by $FeedName. Packages are sorted
+    # ascending by version according to semver rules (e.g. 4.0.0-preview.1 comes
+    # before 4.0.0) not lexicographically.
+    # Packages cannot be filtered at this stage because the sleet feed to which they
+    # are published does not support filtering by name.
+    return Find-Package -Source $NIGHTLY_FEED_NAME -AllVersion -AllowPrereleaseVersions
+}
+
 function GetAllPackages {
     if ($Nightly) {
-        Register-PackageSource `
-            -Name $NIGHTLY_FEED_NAME `
-            -Location $NIGHTLY_FEED_URL `
-            -ProviderName Nuget `
-            -ErrorAction SilentlyContinue `
-
-        # List all packages from the source specified by $FeedName. Packages are sorted
-        # ascending by version according to semver rules (e.g. 4.0.0-preview.1 comes
-        # before 4.0.0) not lexicographically.
-        # Packages cannot be filtered at this stage because the sleet feed to which they
-        # are published does not support filtering by name.
-        $allPackages = Find-Package -Source $NIGHTLY_FEED_NAME -AllVersion -AllowPrereleaseVersions
-    } else {
-        $allPackages = Find-Package -Source $RELEASE_FEED_URL -AllVersion -AllowPrereleaseVersions
-        $allPackages = $allPackages | Where-Object { !$_.Version.Contains("dev") -and !$_.Version.Contains("alpha") }
+        return GetAllNightlyPackages
     }
-
-    return $allPackages
+    return Find-Package -Source $RELEASE_FEED_URL -AllVersion -AllowPrereleaseVersions
 }
 
 function GetLatestPackage([array]$packageList, [string]$packageName) {
@@ -70,15 +70,20 @@ function GetLatestPackage([array]$packageList, [string]$packageName) {
             -and $PACKAGE_EXCLUSIONS[$packageName].ContainsKey($_.Version)) `
         }
         | Select-Object -ExpandProperty Version)
-    $sorted = [AzureEngSemanticVersion]::SortVersionStrings($versions)
 
+    if (!$versions) {
+        Write-Warning "Did not find any versions for $($packageName)"
+        return
+    }
+
+    $sorted = [AzureEngSemanticVersion]::SortVersionStrings($versions)
     return $sorted | Select-Object -First 1
 }
 
 function SetLatestPackageVersions([object]$csproj) {
     # For each PackageReference in the csproj, find the latest version of that
     # package from the dev feed which is not in the excluded list.
-    $allPackages = GetAllPackages
+    # $allPackages = GetAllPackages
     $csproj |
         Select-XML $PACKAGE_REFERENCE_XPATH |
         Where-Object { $_.Node.HasAttribute('Version') } |
@@ -116,7 +121,7 @@ function SetLatestPackageVersions([object]$csproj) {
 
 function UpdateCsprojVersions {
     $projectFilePath = Resolve-Path -Path $ProjectFile
-    [xml]$csproj = Get-Content $ProjectFile
+    [xml]$csproj = Get-Content $projectFilePath
     SetLatestPackageVersions $csproj
     $csproj.Save($projectFilePath)
 }
