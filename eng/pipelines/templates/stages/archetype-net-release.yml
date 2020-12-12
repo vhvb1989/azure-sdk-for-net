@@ -23,7 +23,7 @@ stages:
               - pwsh: |
                   $deps = (Select-Xml -Path ./common/SmokeTests/SmokeTest/SmokeTest.csproj `
                                       -Xpath //ItemGroup/PackageReference/@Include).Node.Value
-                  if ($dependencies.Contains("${{ artifact.name }}")) {
+                  if ($deps.Contains("${{ artifact.name }}")) {
                     Write-Host "Smoke tests will run for ${{ artifact.safeName }}"
                     Write-Host "##vso[task.setvariable variable=RunSmokeTests]true"
                   } else {

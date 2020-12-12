@@ -2,7 +2,7 @@ param(
     [string]$ProjectFile = './SmokeTest.csproj',
     [switch]$SkipVersionValidation,
     [switch]$CI,
-    [Boolean]$Nightly = $true
+    [switch]$Nightly
 )
 
 . $PSScriptRoot/../../../eng/common/scripts/SemVer.ps1

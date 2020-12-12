@@ -69,13 +69,14 @@ jobs:
         inputs:
           targetType: filePath
           filePath: ./common/SmokeTests/SmokeTest/Update-Dependencies.ps1
-          arguments: -CI -Nightly [Boolean]"${{ parameters.Nightly }}"
           workingDirectory: common/SmokeTests/SmokeTest
           pwsh: true
-        ${{ if parameters.Nightly }}:
-          displayName: Use latest dev feed package versions
-        ${{ if not(parameters.Nightly) }}:
-          displayName: Use latest package versions
+          ${{ if parameters.Nightly }}:
+            arguments: -CI -Nightly
+            displayName: Use latest dev feed package versions
+          ${{ if not(parameters.Nightly) }}:
+            arguments: -CI
+            displayName: Use latest package versions
 
       - pwsh: Get-Content ./common/SmokeTests/SmokeTest/SmokeTest.csproj
         displayName: Show SmokeTest.csproj
