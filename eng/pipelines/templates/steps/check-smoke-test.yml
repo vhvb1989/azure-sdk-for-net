@@ -1,0 +1,15 @@
+parameters:
+  - name: package
+    type: string
+
+steps:
+  - pwsh: |
+      $deps = (Select-Xml -Path ./common/SmokeTests/SmokeTest/SmokeTest.csproj `
+                          -Xpath //ItemGroup/PackageReference/@Include).Node.Value
+      if ($deps.Contains("${{ artifact.name }}")) {
+        Write-Host "Smoke tests will run for ${{ parameters.package }}"
+        Write-Host "##vso[task.setvariable variable=RunSmokeTests]true"
+      } else {
+        Write-Host "Smoke tests will NOT run for ${{ parameters.package }}"
+      }
+    displayName: Check smoke test eligibility for ${{ parameters.package }}
