@@ -21,7 +21,7 @@ stages:
             displayName: Check smoke test eligibility
             steps:
               - pwsh: |
-                  $deps = (Select-Xml -Path /common/SmokeTests/SmokeTest/SmokeTest.csproj `
+                  $deps = (Select-Xml -Path ./common/SmokeTests/SmokeTest/SmokeTest.csproj `
                                       -Xpath //ItemGroup/PackageReference/@Include).Node.Value
                   if ($dependencies.Contains("${{ artifact.name }}")) {
                     Write-Host "Smoke tests will run for ${{ artifact.safeName }}"
@@ -32,6 +32,7 @@ stages:
                 displayName: Check smoke test eligibility
 
   - stage: SmokeTest_Release_Packages
+    displayName: Smoke Test Release Packages
     condition: eq(variables['RunSmokeTests'], 'true')
     dependsOn:
       - ${{ each artifact in parameters.Artifacts }}:
