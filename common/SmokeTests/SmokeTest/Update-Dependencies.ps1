@@ -83,7 +83,7 @@ function GetLatestPackage([array]$packageList, [string]$packageName) {
 function SetLatestPackageVersions([object]$csproj) {
     # For each PackageReference in the csproj, find the latest version of that
     # package from the dev feed which is not in the excluded list.
-    # $allPackages = GetAllPackages
+    $allPackages = GetAllPackages
     $csproj |
         Select-XML $PACKAGE_REFERENCE_XPATH |
         Where-Object { $_.Node.HasAttribute('Version') } |
