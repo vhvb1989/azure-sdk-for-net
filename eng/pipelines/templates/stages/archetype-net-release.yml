@@ -7,37 +7,22 @@ parameters:
 
 stages:
   - ${{if and(eq(variables['Build.Reason'], 'Manual'), eq(variables['System.TeamProject'], 'internal'))}}:
-    - ${{ each artifact in parameters.Artifacts }}:
-      - stage: Release_${{artifact.safeName}}
-        displayName: 'Release: ${{artifact.name}}'
-        jobs:
-          - job: Test_Noop
-            displayName: Test NOOP
-            steps:
-              - pwsh: echo foo
-                displayName: Test NOOP
-
-          - job: check_smoke_test
-            displayName: Check smoke test eligibility
-            steps:
-              - pwsh: |
-                  $deps = (Select-Xml -Path ./common/SmokeTests/SmokeTest/SmokeTest.csproj `
-                                      -Xpath //ItemGroup/PackageReference/@Include).Node.Value
-                  if ($deps.Contains("${{ artifact.name }}")) {
-                    Write-Host "Smoke tests will run for ${{ artifact.safeName }}"
-                    Write-Host "##vso[task.setvariable variable=RunSmokeTests]true"
-                  } else {
-                    Write-Host "Smoke tests will NOT run for ${{ artifact.safeName }}"
-                  }
-                displayName: Check smoke test eligibility
-
-  - stage: SmokeTest_Release_Packages
-    displayName: Smoke Test Release Packages
-    condition: eq(variables['RunSmokeTests'], 'true')
-    dependsOn:
-      - ${{ each artifact in parameters.Artifacts }}:
-        - Release_${{artifact.safeName}}
-    jobs:
-      - template: /eng/pipelines/templates/jobs/smoke-tests.yml
-        parameters:
-          Nightly: false
+    - stage: SmokeTest_Release_Packages
+      displayName: Smoke Test Release Packages
+      jobs:
+        - pwsh: |
+            # pipelines only supports template each when it generates the entire script block.
+            ${{ each artifact in parameters.Artifacts }}:
+              $deps = (Select-Xml -Path ./common/SmokeTests/SmokeTest/SmokeTest.csproj `
+                                  -Xpath //ItemGroup/PackageReference/@Include).Node.Value
+              if ($deps.Contains("${{ artifact.name }}")) {
+                Write-Host "Smoke tests will run for ${{ artifact.name }}"
+                Write-Host "##vso[task.setvariable variable=RunSmokeTests]true"
+              } else {
+                Write-Host "Smoke tests will NOT run for ${{ artifact.name }}"
+              }
+          displayName: Check smoke test eligibility
+        - template: /eng/pipelines/templates/jobs/smoke-tests.yml
+          condition: eq(variables['RunSmokeTests'], 'true')
+          parameters:
+            Nightly: false
