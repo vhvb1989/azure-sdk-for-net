@@ -16,6 +16,5 @@ stages:
             parameters:
               package: ${{ artifact.name }}
         - template: /eng/pipelines/templates/jobs/smoke-tests.yml
-          condition: eq(variables['RunSmokeTests'], 'true')
           parameters:
             Nightly: false
