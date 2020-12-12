@@ -76,7 +76,7 @@ function GetLatestPackage([array]$packageList, [string]$packageName) {
 }
 
 function SetLatestPackageVersions([object]$csproj) {
-    # For each PackageReferecne in the csproj, find the latest version of that
+    # For each PackageReference in the csproj, find the latest version of that
     # package from the dev feed which is not in the excluded list.
     $allPackages = GetAllPackages
     $csproj |
@@ -117,6 +117,7 @@ function SetLatestPackageVersions([object]$csproj) {
 function UpdateCsprojVersions {
     $projectFilePath = Resolve-Path -Path $ProjectFile
     [xml]$csproj = Get-Content $ProjectFile
+    SetLatestPackageVersions $csproj
     $csproj.Save($projectFilePath)
 }
 
