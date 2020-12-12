@@ -10,18 +10,11 @@ stages:
     - stage: SmokeTest_Release_Packages
       displayName: Smoke Test Release Packages
       jobs:
-        - pwsh: |
-            # pipelines only supports template each when it generates the entire script block.
-            ${{ each artifact in parameters.Artifacts }}:
-              $deps = (Select-Xml -Path ./common/SmokeTests/SmokeTest/SmokeTest.csproj `
-                                  -Xpath //ItemGroup/PackageReference/@Include).Node.Value
-              if ($deps.Contains("${{ artifact.name }}")) {
-                Write-Host "Smoke tests will run for ${{ artifact.name }}"
-                Write-Host "##vso[task.setvariable variable=RunSmokeTests]true"
-              } else {
-                Write-Host "Smoke tests will NOT run for ${{ artifact.name }}"
-              }
-          displayName: Check smoke test eligibility
+        # pipelines only supports template each when it generates the entire script block.
+        - ${{ each artifact in parameters.Artifacts }}:
+          - template: /eng/pipelines/templates/steps/check-smoke-test.yml
+            parameters:
+              package: ${{ artifact.name }}
         - template: /eng/pipelines/templates/jobs/smoke-tests.yml
           condition: eq(variables['RunSmokeTests'], 'true')
           parameters:
