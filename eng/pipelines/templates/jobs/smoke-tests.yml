@@ -69,7 +69,7 @@ jobs:
         inputs:
           targetType: filePath
           filePath: ./common/SmokeTests/SmokeTest/Update-Dependencies.ps1
-          arguments: -CI -Nightly ${{ parameters.Nightly }}
+          arguments: -CI -Nightly [Boolean]"${{ parameters.Nightly }}"
           workingDirectory: common/SmokeTests/SmokeTest
           pwsh: true
         ${{ if parameters.Nightly }}:
