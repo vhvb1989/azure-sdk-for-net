@@ -120,4 +120,4 @@ function UpdateCsprojVersions {
     $csproj.Save($projectFilePath)
 }
 
-# UpdateCsprojVersions
+UpdateCsprojVersions
