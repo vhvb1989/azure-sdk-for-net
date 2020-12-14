@@ -43,7 +43,7 @@ jobs:
       azureCloudArmParameters: "@{ storageEndpointSuffix = 'core.windows.net'; azureCloud = 'AzureCloud'; }"
       azureUSGovernmentArmParameters: "@{ storageEndpointSuffix = 'core.usgovcloudapi.net'; azureCloud = 'AzureUSGovernment'; }"
       azureChinaCloudArmParameters: "@{ storageEndpointSuffix = 'core.chinacloudapi.cn'; azureCloud = 'AzureChinaCloud'; }"
-      DebugRun: $[ dependencies.smoke_test_eligibility.outputs['RunSmokeTests'] ]
+      DebugRun: $[ dependencies.smoke_test_eligibility.outputs['output_eligibility.RunSmokeTests'] ]
     ${{ if eq(parameters.Nightly, false) }}:
       dependsOn: smoke_test_eligibility
       condition: eq(variables.DebugRun, true)
