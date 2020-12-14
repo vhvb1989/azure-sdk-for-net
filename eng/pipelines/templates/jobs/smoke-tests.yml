@@ -26,9 +26,9 @@ jobs:
             Write-Host "##vso[task.setvariable variable=RunSmokeTests]$($env:RunSmokeTests)"
           name: output_smoke_test_eligibility
   - job: SmokeTest
-    ${{ if and(not(parameters.Nightly), parameters.Artifacts) }}:
-      dependsOn: smoke_test_eligibility
-      condition: $[ eq(dependencies.smoke_test_eligibility.outputs['output_smoke_test_eligibility.RunSmokeTests'], true) ]
+    #${{ if and(not(parameters.Nightly), parameters.Artifacts) }}:
+    dependsOn: smoke_test_eligibility
+    condition: eq(dependencies.smoke_test_eligibility.outputs['output_smoke_test_eligibility.RunSmokeTests'], true)
     strategy:
       matrix:
         Linux (AzureCloud):
