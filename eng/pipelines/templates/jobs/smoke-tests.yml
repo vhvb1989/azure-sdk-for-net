@@ -6,8 +6,8 @@ parameters:
 
 jobs:
   - ${{ if eq(parameters.Nightly, false) }}:
-    - job: Check Smoke Test Eligibility
-      name: smoke_test_eligibility
+    - job: smoke_test_eligibility
+      displayName: Check Smoke Test Eligibility
       steps:
         # pipelines only supports template each when it generates the entire script block.
         - ${{ each artifact in parameters.Artifacts }}:
@@ -24,12 +24,12 @@ jobs:
             displayName: Check smoke test eligibility for ${{ artifact.name }}
         - pwsh: |
             Write-Host "##vso[task.setvariable variable=RunSmokeTests]$($env:RunSmokeTests)"
-          name: output_smoke_test_eligibility
+          name: output_eligibility
   - job: SmokeTest
     #${{ if and(not(parameters.Nightly), parameters.Artifacts) }}:
     ${{ if eq(parameters.Nightly, false) }}:
       dependsOn: smoke_test_eligibility
-      condition: eq(dependencies.smoke_test_eligibility.outputs['output_smoke_test_eligibility.RunSmokeTests'], true)
+      condition: eq(dependencies.smoke_test_eligibility.outputs['output_eligibility.RunSmokeTests'], true)
     strategy:
       matrix:
         Linux (AzureCloud):
