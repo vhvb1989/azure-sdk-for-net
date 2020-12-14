@@ -23,21 +23,26 @@ jobs:
             name: check_smoke_tests_${{ artifact.safeName }}
             displayName: Check smoke test eligibility for ${{ artifact.name }}
         - pwsh: |
-            Write-Host "var value"
-            Write-Host $env:RunSmokeTests
-            Write-Host "##vso[task.setvariable variable=RunSmokeTests]$($env:RunSmokeTests)"
+            Write-Host "Setting RunSmokeTests to $($env:RunSmokeTests)"
+            Write-Host "##vso[task.setvariable variable=RunSmokeTests;isOutput=true]$($env:RunSmokeTests)"
           name: output_eligibility
-        - pwsh: |
-            Write-Host "var value"
-            Write-Host $env:RunSmokeTests
-          name: output_eligibility2
-          env:
-            RunSmokeTests: $(RunSmokeTests)
-  - job: SmokeTest
-    #${{ if and(not(parameters.Nightly), parameters.Artifacts) }}:
+  - job: SmokeTestDebug
+    variables:
+      DebugRun: $[ dependencies.smoke_test_eligibility.outputs['RunSmokeTests'] ]
     ${{ if eq(parameters.Nightly, false) }}:
       dependsOn: smoke_test_eligibility
-      condition: eq(dependencies.smoke_test_eligibility.outputs['output_eligibility.RunSmokeTests'], true)
+    steps:
+      - pwsh: |
+          Write-Host $env:DebugRun
+  - job: SmokeTest
+    variables:
+      azureCloudArmParameters: "@{ storageEndpointSuffix = 'core.windows.net'; azureCloud = 'AzureCloud'; }"
+      azureUSGovernmentArmParameters: "@{ storageEndpointSuffix = 'core.usgovcloudapi.net'; azureCloud = 'AzureUSGovernment'; }"
+      azureChinaCloudArmParameters: "@{ storageEndpointSuffix = 'core.chinacloudapi.cn'; azureCloud = 'AzureChinaCloud'; }"
+      DebugRun: $[ dependencies.smoke_test_eligibility.outputs['RunSmokeTests'] ]
+    ${{ if eq(parameters.Nightly, false) }}:
+      dependsOn: smoke_test_eligibility
+      condition: eq(variables.DebugRun, true)
     strategy:
       matrix:
         Linux (AzureCloud):
@@ -89,11 +94,6 @@ jobs:
 
     pool:
       vmImage: $(OSVmImage)
-
-    variables:
-      azureCloudArmParameters: "@{ storageEndpointSuffix = 'core.windows.net'; azureCloud = 'AzureCloud'; }"
-      azureUSGovernmentArmParameters: "@{ storageEndpointSuffix = 'core.usgovcloudapi.net'; azureCloud = 'AzureUSGovernment'; }"
-      azureChinaCloudArmParameters: "@{ storageEndpointSuffix = 'core.chinacloudapi.cn'; azureCloud = 'AzureChinaCloud'; }"
 
     steps:
       - template: /eng/common/pipelines/templates/steps/verify-agent-os.yml
