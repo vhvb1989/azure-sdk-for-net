@@ -5,7 +5,7 @@ parameters:
     type: object
 
 jobs:
-  - ${{ if not(parameters.Nightly) }}:
+  - ${{ if eq(parameters.Nightly, false) }}:
     - job: Check Smoke Test Eligibility
       name: smoke_test_eligibility
       steps:
@@ -27,7 +27,7 @@ jobs:
           name: output_smoke_test_eligibility
   - job: SmokeTest
     #${{ if and(not(parameters.Nightly), parameters.Artifacts) }}:
-    ${{ if not(parameters.Nightly) }}:
+    ${{ if eq(parameters.Nightly, false) }}:
       dependsOn: smoke_test_eligibility
       condition: eq(dependencies.smoke_test_eligibility.outputs['output_smoke_test_eligibility.RunSmokeTests'], true)
     strategy:
