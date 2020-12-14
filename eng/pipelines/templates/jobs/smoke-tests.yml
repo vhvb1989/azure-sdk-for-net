@@ -23,8 +23,16 @@ jobs:
             name: check_smoke_tests_${{ artifact.safeName }}
             displayName: Check smoke test eligibility for ${{ artifact.name }}
         - pwsh: |
+            Write-Host "var value"
+            Write-Host $env:RunSmokeTests
             Write-Host "##vso[task.setvariable variable=RunSmokeTests]$($env:RunSmokeTests)"
           name: output_eligibility
+        - pwsh: |
+            Write-Host "var value"
+            Write-Host $env:RunSmokeTests
+          name: output_eligibility2
+          env:
+            RunSmokeTests: $(RunSmokeTests)
   - job: SmokeTest
     #${{ if and(not(parameters.Nightly), parameters.Artifacts) }}:
     ${{ if eq(parameters.Nightly, false) }}:
