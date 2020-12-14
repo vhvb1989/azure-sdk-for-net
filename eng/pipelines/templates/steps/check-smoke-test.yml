@@ -12,4 +12,5 @@ steps:
       } else {
         Write-Host "Smoke tests will NOT run for ${{ parameters.package }}"
       }
+    name: check_smoke_tests
     displayName: Check smoke test eligibility for ${{ parameters.package }}

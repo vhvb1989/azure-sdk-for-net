@@ -1,10 +1,34 @@
 parameters:
   - name: Nightly
     default: true
+  - name: Artifacts
+    type: object
 
 jobs:
+  - ${{ if and(not(parameters.Nightly), parameters.Artifacts) }}:
+    - job: Check Smoke Test Eligibility
+      name: smoke_test_eligibility
+      steps:
+        # pipelines only supports template each when it generates the entire script block.
+        - ${{ each artifact in parameters.Artifacts }}:
+          - pwsh: |
+              $deps = (Select-Xml -Path ./common/SmokeTests/SmokeTest/SmokeTest.csproj `
+                                  -Xpath //ItemGroup/PackageReference/@Include).Node.Value
+              if ($deps.Contains("${{ artifact.name }}")) {
+                Write-Host "Smoke tests will run for ${{ artifact.name }}"
+                Write-Host "##vso[task.setvariable variable=RunSmokeTests]true"
+              } else {
+                Write-Host "Smoke tests will NOT run for ${{ parameters.package }}"
+              }
+            name: check_smoke_tests_${{ artifact.safeName }}
+            displayName: Check smoke test eligibility for ${{ artifact.name }}
+        - pwsh: |
+            Write-Host "##vso[task.setvariable variable=RunSmokeTests]$($env:RunSmokeTests)"
+          name: output_smoke_test_eligibility
   - job: SmokeTest
-    condition: or(eq(${{ parameters.Nightly }}, true), eq(variables['RunSmokeTests'], 'true'))
+    ${{ if and(not(parameters.Nightly), parameters.Artifacts) }}:
+      dependsOn: smoke_test_eligibility
+      condition: $[ eq(dependencies.smoke_test_eligibility.outputs['output_smoke_test_eligibility.RunSmokeTests'], true) ]
     strategy:
       matrix:
         Linux (AzureCloud):
