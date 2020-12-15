@@ -3,6 +3,7 @@ parameters:
     default: true
   - name: Artifacts
     type: object
+    default: []
 
 jobs:
   - ${{ if eq(parameters.Nightly, false) }}:
