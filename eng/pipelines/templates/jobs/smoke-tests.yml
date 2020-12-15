@@ -12,7 +12,8 @@ jobs:
       steps:
         # pipelines only supports template each when it generates the entire script block.
         - ${{ each artifact in parameters.Artifacts }}:
-          - ${{if and(ne(variables['Skip.Release'], 'true'), ne(artifact.skipPublishPackage, 'true')) }}:
+          #- ${{if and(ne(variables['Skip.Release'], 'true'), ne(artifact.skipPublishPackage, 'true')) }}:
+          - ${{if ne(artifact.skipPublishPackage, 'true') }}:
             - pwsh: |
                 $deps = (Select-Xml -Path ./common/SmokeTests/SmokeTest/SmokeTest.csproj `
                                     -Xpath //ItemGroup/PackageReference/@Include).Node.Value
