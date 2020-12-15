@@ -12,29 +12,28 @@ jobs:
       steps:
         # pipelines only supports template each when it generates the entire script block.
         - ${{ each artifact in parameters.Artifacts }}:
-          - pwsh: |
-              $deps = (Select-Xml -Path ./common/SmokeTests/SmokeTest/SmokeTest.csproj `
-                                  -Xpath //ItemGroup/PackageReference/@Include).Node.Value
-              if ($deps.Contains("${{ artifact.name }}")) {
-                Write-Host "Smoke tests will run for ${{ artifact.name }}"
-                Write-Host "##vso[task.setvariable variable=RunSmokeTests]true"
-              } else {
-                Write-Host "Smoke tests will NOT run for ${{ parameters.package }}"
-              }
-            name: check_smoke_tests_${{ artifact.safeName }}
-            displayName: Check smoke test eligibility for ${{ artifact.name }}
+          - ${{if and(ne(variables['Skip.Release'], 'true'), ne(artifact.skipPublishPackage, 'true')) }}:
+            - pwsh: |
+                $deps = (Select-Xml -Path ./common/SmokeTests/SmokeTest/SmokeTest.csproj `
+                                    -Xpath //ItemGroup/PackageReference/@Include).Node.Value
+                if ($deps.Contains("${{ artifact.name }}")) {
+                  Write-Host "Smoke tests will run for ${{ artifact.name }}"
+                  Write-Host "##vso[task.setvariable variable=RunSmokeTests]true"
+                } else {
+                  Write-Host "Smoke tests will NOT run for ${{ parameters.package }}"
+                }
+              name: check_smoke_tests_${{ artifact.safeName }}
+              displayName: Check smoke test eligibility for ${{ artifact.name }}
         - pwsh: |
             Write-Host "Setting RunSmokeTests to $($env:RunSmokeTests)"
             Write-Host "##vso[task.setvariable variable=RunSmokeTests;isOutput=true]$($env:RunSmokeTests)"
           name: output_eligibility
   - job: SmokeTest
-    variables:
-      azureCloudArmParameters: "@{ storageEndpointSuffix = 'core.windows.net'; azureCloud = 'AzureCloud'; }"
-      azureUSGovernmentArmParameters: "@{ storageEndpointSuffix = 'core.usgovcloudapi.net'; azureCloud = 'AzureUSGovernment'; }"
-      azureChinaCloudArmParameters: "@{ storageEndpointSuffix = 'core.chinacloudapi.cn'; azureCloud = 'AzureChinaCloud'; }"
+
     ${{ if eq(parameters.Nightly, false) }}:
       dependsOn: smoke_test_eligibility
-      condition: eq(dependencies.smoke_test_eligibility.outputs['output_eligibility.RunSmokeTests'], true)
+      condition: and(succeeded(), eq(dependencies.smoke_test_eligibility.outputs['output_eligibility.RunSmokeTests'], true))
+
     strategy:
       matrix:
         Linux (AzureCloud):
@@ -84,6 +83,11 @@ jobs:
           SubscriptionConfiguration: $(sub-config-cn-test-resources)
           ArmTemplateParameters: $(azureChinaCloudArmParameters)
 
+    variables:
+      azureCloudArmParameters: "@{ storageEndpointSuffix = 'core.windows.net'; azureCloud = 'AzureCloud'; }"
+      azureUSGovernmentArmParameters: "@{ storageEndpointSuffix = 'core.usgovcloudapi.net'; azureCloud = 'AzureUSGovernment'; }"
+      azureChinaCloudArmParameters: "@{ storageEndpointSuffix = 'core.chinacloudapi.cn'; azureCloud = 'AzureChinaCloud'; }"
+
     pool:
       vmImage: $(OSVmImage)
 
@@ -91,6 +95,10 @@ jobs:
       - template: /eng/common/pipelines/templates/steps/verify-agent-os.yml
 
       - task: PowerShell@2
+        ${{ if eq(parameters.Nightly, true) }}:
+          displayName: Use latest dev feed package versions
+        ${{ if eq(parameters.Nightly, false) }}:
+          displayName: Use latest package versions
         inputs:
           targetType: filePath
           filePath: ./common/SmokeTests/SmokeTest/Update-Dependencies.ps1
