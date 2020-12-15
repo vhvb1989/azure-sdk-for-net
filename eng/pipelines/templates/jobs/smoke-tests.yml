@@ -26,27 +26,14 @@ jobs:
             Write-Host "Setting RunSmokeTests to $($env:RunSmokeTests)"
             Write-Host "##vso[task.setvariable variable=RunSmokeTests;isOutput=true]$($env:RunSmokeTests)"
           name: output_eligibility
-  - job: SmokeTestDebug
-    variables:
-      DebugRun: $[ dependencies.smoke_test_eligibility.outputs['RunSmokeTests'] ]
-      DebugRun2: $[ dependencies.smoke_test_eligibility.outputs['output_eligibility.RunSmokeTests'] ]
-    ${{ if eq(parameters.Nightly, false) }}:
-      dependsOn: smoke_test_eligibility
-    steps:
-      - pwsh: |
-          Write-Host "debugrun"
-          Write-Host $env:DebugRun
-          Write-Host "debugrun2"
-          Write-Host $env:DebugRun2
   - job: SmokeTest
     variables:
       azureCloudArmParameters: "@{ storageEndpointSuffix = 'core.windows.net'; azureCloud = 'AzureCloud'; }"
       azureUSGovernmentArmParameters: "@{ storageEndpointSuffix = 'core.usgovcloudapi.net'; azureCloud = 'AzureUSGovernment'; }"
       azureChinaCloudArmParameters: "@{ storageEndpointSuffix = 'core.chinacloudapi.cn'; azureCloud = 'AzureChinaCloud'; }"
-      DebugRun: $[ dependencies.smoke_test_eligibility.outputs['output_eligibility.RunSmokeTests'] ]
     ${{ if eq(parameters.Nightly, false) }}:
       dependsOn: smoke_test_eligibility
-      condition: eq(variables.DebugRun, true)
+      condition: eq(dependencies.smoke_test_eligibility.outputs['output_eligibility.RunSmokeTests'], true)
     strategy:
       matrix:
         Linux (AzureCloud):
