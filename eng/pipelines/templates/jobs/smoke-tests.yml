@@ -95,10 +95,10 @@ jobs:
           filePath: ./common/SmokeTests/SmokeTest/Update-Dependencies.ps1
           workingDirectory: common/SmokeTests/SmokeTest
           pwsh: true
-          ${{ if parameters.Nightly }}:
+          ${{ if eq(parameters.Nightly, true) }}:
             arguments: -CI -Nightly
             displayName: Use latest dev feed package versions
-          ${{ if not(parameters.Nightly) }}:
+          ${{ if eq(parameters.Nightly, false) }}:
             arguments: -CI
             displayName: Use latest package versions
 
