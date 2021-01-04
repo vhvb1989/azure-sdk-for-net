@@ -68,11 +68,13 @@ jobs:
           TestTargetFramework: netcoreapp2.1
           SubscriptionConfiguration: $(sub-config-gov-test-resources)
           ArmTemplateParameters: $(azureUSGovernmentArmParameters)
+          Location: "usgovtexas"
         Windows_NetFramework (AzureUSGovernment):
           OSVmImage: "windows-2019"
           TestTargetFramework: net461
           SubscriptionConfiguration: $(sub-config-gov-test-resources)
           ArmTemplateParameters: $(azureUSGovernmentArmParameters)
+          Location: "usgovtexas"
         Windows_NetCoreApp (AzureChinaCloud):
           OSVmImage: "windows-2019"
           TestTargetFramework: netcoreapp2.1
