@@ -58,138 +58,138 @@ jobs:
         inputs:
           artifactName: packages
           path: $(Build.ArtifactStagingDirectory)
-      
-      - template: /eng/pipelines/templates/steps/create-apireview.yml
-        parameters:
-          Artifacts: ${{parameters.Artifacts}}
 
-  - job: "Analyze"
-    condition: and(succeededOrFailed(), ne(variables['Skip.Analyze'], true))
-    variables:
-      - template: ../variables/globals.yml
-    pool:
-      vmImage: ubuntu-18.04
-    steps:
-      - task: UsePythonVersion@0
-        displayName: "Use Python 3.6"
-        inputs:
-          versionSpec: "3.6"
-      - template: /eng/common/pipelines/templates/steps/verify-links.yml
-        parameters:
-          ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
-            Directory: ''
-            Urls: (eng/common/scripts/get-markdown-files-from-changed-files.ps1)
-          ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
-            Directory: sdk/${{ parameters.ServiceDirectory }}
-          CheckLinkGuidance: $true
-      - script: |
-          pip install setuptools wheel
-          pip install doc-warden==$(DocWardenVersion)
-          ward scan -d $(Build.SourcesDirectory) -c $(Build.SourcesDirectory)/eng/.docsettings.yml
-        displayName: "Verify Readmes"
-      - template: /eng/common/pipelines/templates/steps/verify-path-length.yml
-        parameters:
-          SourceDirectory: $(Build.SourcesDirectory)
-      - task: NodeTool@0
-        inputs:
-          versionSpec: '14.x'
-        displayName: 'Install NodeJS'
-      - template: /eng/pipelines/templates/steps/install-dotnet.yml
-      - task: PowerShell@2
-        displayName: "Verify generated code"
-        env:
-          DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
-          DOTNET_CLI_TELEMETRY_OPTOUT: 1
-        inputs:
-          filePath: "eng/scripts/CodeChecks.ps1"
-          arguments: -ServiceDirectory ${{parameters.ServiceToTest}}
-          pwsh: true
-          failOnStderr:  false
-      - task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
-        displayName: "Component Detection"
-        # ComponentGovernance is currently unable to run on pull requests of public projects.  Running on
-        # scheduled builds should be good enough.
-        inputs:
-          ignoreDirectories: "sdk/storage/Azure.Storage.Common/swagger/Generator"
-        condition: and(succeededOrFailed(), ne(variables['Build.Reason'],'PullRequest'))
+          #      - template: /eng/pipelines/templates/steps/create-apireview.yml
+          #        parameters:
+          #          Artifacts: ${{parameters.Artifacts}}
 
-  - job: "Test"
-    condition: and(succeededOrFailed(), ne(variables['Skip.Test'], true))
-    variables:
-      - template: ../variables/globals.yml
-    strategy:
-      maxParallel: $[ variables['MaxParallelTestJobs'] ]
-      matrix:
-        Linux:
-          Pool: # Intentionally blank.
-          OSVmImage: "ubuntu-18.04"
-          TestTargetFramework: netcoreapp2.1
-        Windows_NetCoreApp:
-          Pool: azsdk-pool-mms-win-2019-general # Comment out to swap back to public hosted pool.
-          OSVmImage: # "windows-2019" # Comment back in to swap back to public hosted pool.
-          TestTargetFramework: netcoreapp2.1
-          CollectCoverage: true
-        Windows_NetCoreApp_ProjectReferences:
-          Pool: azsdk-pool-mms-win-2019-general # Comment out to swap back to public hosted pool.
-          OSVmImage: # "windows-2019" # Comment back in to swap back to public hosted pool.
-          TestTargetFramework: netcoreapp2.1
-          ConvertToProjectReferenceOption: /p:UseProjectReferenceToAzureClients=true
-        Windows_NetFramework:
-          Pool: azsdk-pool-mms-win-2019-general # Comment out to swap back to public hosted pool.
-          OSVmImage: # "windows-2019" # Comment back in to swap back to public hosted pool.
-          TestTargetFramework: net461
-        Windows_NetFramework_ProjectReferences:
-          Pool: azsdk-pool-mms-win-2019-general # Comment out to swap back to public hosted pool.
-          OSVmImage: # "windows-2019" # Comment back in to swap back to public hosted pool.
-          TestTargetFramework: net461
-          ConvertToProjectReferenceOption: /p:UseProjectReferenceToAzureClients=true
-        MacOs:
-          Pool: # Intentionally blank.
-          OSVmImage: "macOS-10.15"
-          TestTargetFramework: netcoreapp2.1
-        Windows_Net50:
-          Pool: azsdk-pool-mms-win-2019-general # Comment out to swap back to public hosted pool.
-          OSVmImage: # "windows-2019" # Comment back in to swap back to public hosted pool.
-          TestTargetFramework: net5.0
-    pool:
-      vmImage: "$(OSVmImage)"
-      name: "$(Pool)"
-    steps:
-      - ${{ each step in parameters.TestSetupSteps }}:
-        - ${{ each pair in step }}:
-            ${{ pair.key }}: ${{ pair.value }}
-      - template: /eng/pipelines/templates/steps/install-dotnet.yml
-      - script: >-
-          dotnet test eng/service.proj --filter TestCategory!=Live --framework $(TestTargetFramework)
-          --logger "trx;LogFileName=$(TestTargetFramework).trx" --logger:"console;verbosity=normal"
-          /p:ServiceDirectory=${{parameters.ServiceToTest}}
-          /p:IncludeSrc=false /p:IncludeSamples=false /p:IncludePerf=false /p:IncludeStress=false
-          /p:Configuration=$(BuildConfiguration) $(ConvertToProjectReferenceOption)
-          /p:CollectCoverage=$(CollectCoverage) /p:CodeCoverageDirectory=${{parameters.ServiceDirectory}}
-        displayName: "Build & Test ($(TestTargetFramework))"
-        env:
-          DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
-          DOTNET_CLI_TELEMETRY_OPTOUT: 1
-      - task: PublishTestResults@2
-        condition: always()
-        displayName: "Publish Results ($(TestTargetFramework))"
-        inputs:
-          testResultsFiles: "**/$(TestTargetFramework)*.trx"
-          testRunTitle: "$(OSName) $(TestTargetFramework)"
-          testResultsFormat: "VSTest"
-          mergeTestResults: true
-      - task: Palmmedia.reportgenerator.reportgenerator-build-release-task.reportgenerator@4
-        condition: and(succeededOrFailed(), eq(variables['CollectCoverage'], 'true'), eq(variables['coverage.collected'], 'true'))
-        displayName: Generate Code Coverage Reports
-        inputs:
-          reports: $(Build.SourcesDirectory)\sdk\${{parameters.ServiceDirectory}}\**\coverage.cobertura.xml
-          targetdir: $(Build.ArtifactStagingDirectory)\coverage
-          reporttypes: Cobertura
-          filefilters: +$(Build.SourcesDirectory)\sdk\${{parameters.ServiceDirectory}}\**
-          verbosity: Verbose
-      - task: PublishCodeCoverageResults@1
-        condition: and(succeededOrFailed(), eq(variables['CollectCoverage'], 'true'), eq(variables['coverage.collected'], 'true'))
-        displayName: Publish Code Coverage Reports
-        inputs:
-          codeCoverageTool: Cobertura
-          summaryFileLocation: $(Build.ArtifactStagingDirectory)\coverage\Cobertura.xml
+          #  - job: "Analyze"
+          #    condition: and(succeededOrFailed(), ne(variables['Skip.Analyze'], true))
+          #    variables:
+          #      - template: ../variables/globals.yml
+          #    pool:
+          #      vmImage: ubuntu-18.04
+          #    steps:
+          #      - task: UsePythonVersion@0
+          #        displayName: "Use Python 3.6"
+          #        inputs:
+          #          versionSpec: "3.6"
+          #      - template: /eng/common/pipelines/templates/steps/verify-links.yml
+          #        parameters:
+          #          ${{ if eq(variables['Build.Reason'], 'PullRequest') }}:
+          #            Directory: ''
+          #            Urls: (eng/common/scripts/get-markdown-files-from-changed-files.ps1)
+          #          ${{ if ne(variables['Build.Reason'], 'PullRequest') }}:
+          #            Directory: sdk/${{ parameters.ServiceDirectory }}
+          #          CheckLinkGuidance: $true
+          #      - script: |
+          #          pip install setuptools wheel
+          #          pip install doc-warden==$(DocWardenVersion)
+          #          ward scan -d $(Build.SourcesDirectory) -c $(Build.SourcesDirectory)/eng/.docsettings.yml
+          #        displayName: "Verify Readmes"
+          #      - template: /eng/common/pipelines/templates/steps/verify-path-length.yml
+          #        parameters:
+          #          SourceDirectory: $(Build.SourcesDirectory)
+          #      - task: NodeTool@0
+          #        inputs:
+          #          versionSpec: '14.x'
+          #        displayName: 'Install NodeJS'
+          #      - template: /eng/pipelines/templates/steps/install-dotnet.yml
+          #      - task: PowerShell@2
+          #        displayName: "Verify generated code"
+          #        env:
+          #          DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+          #          DOTNET_CLI_TELEMETRY_OPTOUT: 1
+          #        inputs:
+          #          filePath: "eng/scripts/CodeChecks.ps1"
+          #          arguments: -ServiceDirectory ${{parameters.ServiceToTest}}
+          #          pwsh: true
+          #          failOnStderr:  false
+          #      - task: ms.vss-governance-buildtask.governance-build-task-component-detection.ComponentGovernanceComponentDetection@0
+          #        displayName: "Component Detection"
+          #        # ComponentGovernance is currently unable to run on pull requests of public projects.  Running on
+          #        # scheduled builds should be good enough.
+          #        inputs:
+          #          ignoreDirectories: "sdk/storage/Azure.Storage.Common/swagger/Generator"
+          #        condition: and(succeededOrFailed(), ne(variables['Build.Reason'],'PullRequest'))
+          #
+          #  - job: "Test"
+          #    condition: and(succeededOrFailed(), ne(variables['Skip.Test'], true))
+          #    variables:
+          #      - template: ../variables/globals.yml
+          #    strategy:
+          #      maxParallel: $[ variables['MaxParallelTestJobs'] ]
+          #      matrix:
+          #        Linux:
+          #          Pool: # Intentionally blank.
+          #          OSVmImage: "ubuntu-18.04"
+          #          TestTargetFramework: netcoreapp2.1
+          #        Windows_NetCoreApp:
+          #          Pool: azsdk-pool-mms-win-2019-general # Comment out to swap back to public hosted pool.
+          #          OSVmImage: # "windows-2019" # Comment back in to swap back to public hosted pool.
+          #          TestTargetFramework: netcoreapp2.1
+          #          CollectCoverage: true
+          #        Windows_NetCoreApp_ProjectReferences:
+          #          Pool: azsdk-pool-mms-win-2019-general # Comment out to swap back to public hosted pool.
+          #          OSVmImage: # "windows-2019" # Comment back in to swap back to public hosted pool.
+          #          TestTargetFramework: netcoreapp2.1
+          #          ConvertToProjectReferenceOption: /p:UseProjectReferenceToAzureClients=true
+          #        Windows_NetFramework:
+          #          Pool: azsdk-pool-mms-win-2019-general # Comment out to swap back to public hosted pool.
+          #          OSVmImage: # "windows-2019" # Comment back in to swap back to public hosted pool.
+          #          TestTargetFramework: net461
+          #        Windows_NetFramework_ProjectReferences:
+          #          Pool: azsdk-pool-mms-win-2019-general # Comment out to swap back to public hosted pool.
+          #          OSVmImage: # "windows-2019" # Comment back in to swap back to public hosted pool.
+          #          TestTargetFramework: net461
+          #          ConvertToProjectReferenceOption: /p:UseProjectReferenceToAzureClients=true
+          #        MacOs:
+          #          Pool: # Intentionally blank.
+          #          OSVmImage: "macOS-10.15"
+          #          TestTargetFramework: netcoreapp2.1
+          #        Windows_Net50:
+          #          Pool: azsdk-pool-mms-win-2019-general # Comment out to swap back to public hosted pool.
+          #          OSVmImage: # "windows-2019" # Comment back in to swap back to public hosted pool.
+          #          TestTargetFramework: net5.0
+          #    pool:
+          #      vmImage: "$(OSVmImage)"
+          #      name: "$(Pool)"
+          #    steps:
+          #      - ${{ each step in parameters.TestSetupSteps }}:
+          #        - ${{ each pair in step }}:
+          #            ${{ pair.key }}: ${{ pair.value }}
+          #      - template: /eng/pipelines/templates/steps/install-dotnet.yml
+          #      - script: >-
+          #          dotnet test eng/service.proj --filter TestCategory!=Live --framework $(TestTargetFramework)
+          #          --logger "trx;LogFileName=$(TestTargetFramework).trx" --logger:"console;verbosity=normal"
+          #          /p:ServiceDirectory=${{parameters.ServiceToTest}}
+          #          /p:IncludeSrc=false /p:IncludeSamples=false /p:IncludePerf=false /p:IncludeStress=false
+          #          /p:Configuration=$(BuildConfiguration) $(ConvertToProjectReferenceOption)
+          #          /p:CollectCoverage=$(CollectCoverage) /p:CodeCoverageDirectory=${{parameters.ServiceDirectory}}
+          #        displayName: "Build & Test ($(TestTargetFramework))"
+          #        env:
+          #          DOTNET_SKIP_FIRST_TIME_EXPERIENCE: 1
+          #          DOTNET_CLI_TELEMETRY_OPTOUT: 1
+          #      - task: PublishTestResults@2
+          #        condition: always()
+          #        displayName: "Publish Results ($(TestTargetFramework))"
+          #        inputs:
+          #          testResultsFiles: "**/$(TestTargetFramework)*.trx"
+          #          testRunTitle: "$(OSName) $(TestTargetFramework)"
+          #          testResultsFormat: "VSTest"
+          #          mergeTestResults: true
+          #      - task: Palmmedia.reportgenerator.reportgenerator-build-release-task.reportgenerator@4
+          #        condition: and(succeededOrFailed(), eq(variables['CollectCoverage'], 'true'), eq(variables['coverage.collected'], 'true'))
+          #        displayName: Generate Code Coverage Reports
+          #        inputs:
+          #          reports: $(Build.SourcesDirectory)\sdk\${{parameters.ServiceDirectory}}\**\coverage.cobertura.xml
+          #          targetdir: $(Build.ArtifactStagingDirectory)\coverage
+          #          reporttypes: Cobertura
+          #          filefilters: +$(Build.SourcesDirectory)\sdk\${{parameters.ServiceDirectory}}\**
+          #          verbosity: Verbose
+          #      - task: PublishCodeCoverageResults@1
+          #        condition: and(succeededOrFailed(), eq(variables['CollectCoverage'], 'true'), eq(variables['coverage.collected'], 'true'))
+          #        displayName: Publish Code Coverage Reports
+          #        inputs:
+          #          codeCoverageTool: Cobertura
+          #          summaryFileLocation: $(Build.ArtifactStagingDirectory)\coverage\Cobertura.xml

@@ -48,7 +48,7 @@ stages:
     - template: archetype-net-release.yml
       parameters:
         ServiceDirectory: ${{ parameters.ServiceDirectory }}
-        DependsOn: Build
+        #        DependsOn: Build
         Artifacts: ${{ parameters.Artifacts }}
         TestPipeline: ${{ parameters.TestPipeline }}
         ArtifactName: packages
