@@ -129,10 +129,10 @@ jobs:
                 if ($deps.Contains("${{ artifact.name }}")) {
                   $files = Get-ChildItem "$(Pipeline.Workspace)/${{ parameters.ArtifactName }}/${{ artifact.name }}/*.nupkg"
                   if ($files -and $files[0] -match "${{ artifact.name }}.(.*).nupkg") {
-                    $node = $csproj
+                    $element = $csproj
                       | Select-Xml -Xpath //Project/ItemGroup/PackageReference
                       | Where-Object { $_.Node.Include -eq "${{ artifact.name }}" }
-                    $node.Version = $matches[1]
+                    $element.Node.Version = $matches[1]
                   }
                 }
 
