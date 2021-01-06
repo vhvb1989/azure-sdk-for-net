@@ -122,23 +122,21 @@ jobs:
 
         - ${{ each artifact in parameters.Artifacts }}:
           - ${{ if and(ne(variables['Skip.Release'], 'true'), ne(artifact.skipPublishPackage, 'true')) }}:
-            - task: PowerShell@2
-              inputs:
-                script: |
-                  [xml]$csproj = Get-Content ./common/SmokeTests/SmokeTest/SmokeTest.csproj
-                  $deps = ($csproj | Select-Xml -Xpath //Project/ItemGroup/PackageReference).Node.Include
+            - pwsh: |
+                [xml]$csproj = Get-Content ./common/SmokeTests/SmokeTest/SmokeTest.csproj
+                $deps = ($csproj | Select-Xml -Xpath //Project/ItemGroup/PackageReference).Node.Include
 
-                  if ($deps.Contains("${{ artifact.name }}")) {
-                    $files = Get-ChildItem "$(Pipeline.Workspace)/${{ parameters.ArtifactName }}/${{ artifact.name }}/*.nupkg"
-                    if ($files -and $files[0] -match "${{ artifact.name }}.(.*).nupkg") {
-                      $node = $csproj
-                        | Select-Xml -Xpath //Project/ItemGroup/PackageReference
-                        | Where-Object { $_.Node.Include -eq "${{ artifact.name }}" }
-                      $node.Version = $matches[1]
-                    }
+                if ($deps.Contains("${{ artifact.name }}")) {
+                  $files = Get-ChildItem "$(Pipeline.Workspace)/${{ parameters.ArtifactName }}/${{ artifact.name }}/*.nupkg"
+                  if ($files -and $files[0] -match "${{ artifact.name }}.(.*).nupkg") {
+                    $node = $csproj
+                      | Select-Xml -Xpath //Project/ItemGroup/PackageReference
+                      | Where-Object { $_.Node.Include -eq "${{ artifact.name }}" }
+                    $node.Version = $matches[1]
                   }
+                }
 
-                  $csproj.Save("./common/SmokeTests/SmokeTest/SmokeTest.csproj")
+                $csproj.Save("./common/SmokeTests/SmokeTest/SmokeTest.csproj")
               displayName: Use ${{ artifact.safeName }} build artifact version
 
       - pwsh: Get-Content ./common/SmokeTests/SmokeTest/SmokeTest.csproj
