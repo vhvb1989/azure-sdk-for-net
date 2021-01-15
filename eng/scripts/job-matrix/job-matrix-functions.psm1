@@ -60,14 +60,14 @@ function GetMatrixConfigFromJson($jsonConfig)
     $config.displayNames.PSObject.Properties | ForEach-Object {
         $config.displayNamesLookup.Add($_.Name, $_.Value)
     }
-    $config.include = $config.include | ForEach-Object {
+    $config.include = $config.include | Where-Object { $null -ne $_ } | ForEach-Object {
         $ordered = [OrderedDictionary]@{}
         $_.PSObject.Properties | ForEach-Object {
             $ordered.Add($_.Name, $_.Value)
         }
         return $ordered
     }
-    $config.exclude = $config.exclude | ForEach-Object {
+    $config.exclude = $config.exclude | Where-Object { $null -ne $_ } | ForEach-Object {
         $ordered = [OrderedDictionary]@{}
         $_.PSObject.Properties | ForEach-Object {
             $ordered.Add($_.Name, $_.Value)
