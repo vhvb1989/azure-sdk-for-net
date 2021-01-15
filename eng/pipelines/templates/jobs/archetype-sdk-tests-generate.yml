@@ -1,0 +1,31 @@
+parameters:
+- name: AdditionalParameters
+  type: object
+- name: CloudConfig
+  type: object
+  default: {}
+- name: MatrixConfigs
+  type: object
+  default: []
+
+jobs:
+- ${{ each config in parameters.MatrixConfigs }}:
+  - job: generate_matrix_${{ config.Name }}
+    pool:
+      vmImage: "ubuntu-18.04"
+    displayName: Generate ${{ config.Name }} matrix
+    steps:
+      - pwsh: |
+          eng/scripts/job-matrix/Create-JobMatrix.ps1 `
+            -ConfigPath ${{ config.Path }} `
+            -Selection ${{ config.Selection }}
+        name: generate_job_matrix_${{ config.Name }}
+        displayName: Generate Job Matrix
+
+  - template: ./archetype-sdk-tests-jobs.yml
+    parameters:
+      Matrix: $[ dependencies.generate_matrix_${{ config.Name }}.outputs['generate_job_matrix_${{ config.Name }}.matrix'] ]
+      DependsOn: generate_matrix_${{ config.Name }}
+      CloudConfig: ${{ parameters.CloudConfig }}
+      ${{ each param in parameters.AdditionalParameters }}:
+        ${{ param.key }}: ${{ param.value }}

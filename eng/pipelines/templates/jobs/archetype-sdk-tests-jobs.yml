@@ -35,15 +35,21 @@ parameters:
 - name: Platforms
   type: object
   default: {}
+- name: Matrix
+  type: string
+- name: DependsOn
+  type: string
+  default: ''
 - name: UsePlatformContainer
   type: boolean
   default: false
 
 jobs:
   - job:
+    dependsOn: ${{ parameters.DependsOn }}
     strategy:
       maxParallel: ${{ parameters.MaxParallel }}
-      matrix: ${{ parameters.Platforms }}
+      matrix: ${{ parameters.Matrix }}
 
     variables:
       - template: ../variables/globals.yml

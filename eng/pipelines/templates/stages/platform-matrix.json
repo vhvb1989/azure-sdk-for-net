@@ -1,0 +1,32 @@
+{
+  "displayNames": {
+    "/p:UseProjectReferenceToAzureClients=true": "UseProjectRef"
+  },
+  "matrix": {
+    "OsVmImage": [
+      "windows-2019",
+      "ubuntu-18.04"
+    ],
+    "TestTargetFramework": [
+      "net461",
+      "netcoreapp2.1",
+      "net50"
+    ],
+    "AdditionalTestArguments": [
+      "",
+      "/p:UseProjectReferenceToAzureClients=true"
+    ]
+  },
+  "include": [
+    {
+      "OSVmImage": "macOS-10.15",
+      "TestTargetFramework": "netcoreapp2.1",
+      "SupportedClouds": "Public"
+    },
+    {
+      "OSVmImage": "windows-2019",
+      "TestTargetFramework": "netcoreapp2.1",
+      "SupportsRecording": true
+    }
+  ]
+}
