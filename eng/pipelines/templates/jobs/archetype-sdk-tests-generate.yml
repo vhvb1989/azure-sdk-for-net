@@ -12,7 +12,7 @@ jobs:
 - ${{ each config in parameters.MatrixConfigs }}:
   - job: generate_matrix_${{ config.Name }}
     variables:
-      filter: $[ coalesce($(jobMatrixFilter), '.*') ]
+      filter: '.*'
     pool:
       vmImage: "ubuntu-18.04"
     displayName: Generate ${{ config.Name }} matrix
