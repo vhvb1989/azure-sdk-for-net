@@ -50,12 +50,18 @@ BeforeAll {
 
 Describe "Matrix-Lookup" -Tag "filter" {
     It "Should filter by matrix display name" -TestCases @(
-        @{ regex = "windows.*"; expectedFirst = "windows2019_netcoreapp21"; length = 3 }
-        @{ regex = "windows2019_netcoreapp21_withfoo"; expectedFirst = "windows2019_netcoreapp21"; length = 1 }
+        @{ regex = "windows.*"; expectedFirst = "windows2019_netcoreapp21"; length = 5 }
+        @{ regex = "windows2019_netcoreapp21_withfoo"; expectedFirst = "windows2019_netcoreapp21_withfoo"; length = 1 }
+        @{ regex = "doesnotexist"; expectedFirst = $null; length = 0 }
+        @{ regex = ".*ubuntu.*"; expectedFirst = "ubuntu1804_net461"; length = 2 }
     ) {
         $matrix = GenerateMatrix $config "all"
-        $filtered = FilterMatrixDisplayName $matrix $regex
+        [array]$filtered = FilterMatrixDisplayName $matrix $regex
         $filtered.Length | Should -Be $length
-        $filtered[0].Name | Should -Be $expectedFirst
+        if ($null -ne $filtered) {
+            $filtered[0].Name | Should -Be $expectedFirst
+        } else {
+            $expectedFirst | Should -BeNullOrEmpty
+        }
     }
 }
