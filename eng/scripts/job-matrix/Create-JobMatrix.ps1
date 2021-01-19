@@ -11,7 +11,7 @@
 param (
     [Parameter(Mandatory=$True)][string] $ConfigPath,
     [Parameter(Mandatory=$True)][string] $Selection,
-    [Parameter(Mandatory=$False)][string] $Filter = '.*'
+    [Parameter(Mandatory=$False)][string] $Filter
 )
 
 Import-Module $PSScriptRoot/job-matrix-functions.psm1
