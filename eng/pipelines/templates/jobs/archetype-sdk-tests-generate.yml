@@ -21,8 +21,8 @@ jobs:
           Write-Host "FILTER: $(jobMatrixFilter)"
           eng/scripts/job-matrix/Create-JobMatrix.ps1 `
             -ConfigPath ${{ config.Path }} `
-            -Selection ${{ config.Selection }}
-            -Filter $(filter)
+            -Selection ${{ config.Selection }} `
+            -Filter "$(filter)"
         name: generate_job_matrix_${{ config.Name }}
         displayName: Generate Job Matrix
 
