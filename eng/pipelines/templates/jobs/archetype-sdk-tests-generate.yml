@@ -12,17 +12,17 @@ jobs:
 - ${{ each config in parameters.MatrixConfigs }}:
   - job: generate_matrix_${{ config.Name }}
     variables:
-      jobMatrixFilter: $[ coalesce(variables.jobMatrixFilter, '.*') ]
+      filter: $[ coalesce(variables.jobMatrixFilter, '.*') ]
     pool:
       vmImage: "ubuntu-18.04"
     displayName: Generate ${{ config.Name }} matrix
     steps:
       - pwsh: |
-          Write-Host "FILTER: $(jobMatrixFilter)"
+          Write-Host "FILTER: $(filter)"
           eng/scripts/job-matrix/Create-JobMatrix.ps1 `
             -ConfigPath ${{ config.Path }} `
             -Selection ${{ config.Selection }} `
-            -Filter "$(jobMatrixFilter)"
+            -Filter "$(filter)"
         name: generate_job_matrix_${{ config.Name }}
         displayName: Generate Job Matrix
 
