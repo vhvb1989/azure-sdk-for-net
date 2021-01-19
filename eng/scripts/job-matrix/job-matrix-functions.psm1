@@ -26,7 +26,7 @@ function CreateDisplayName([string]$parameter, [Hashtable]$displayNames)
     return $name
 }
 
-function GenerateMatrix([MatrixConfig]$config, [string]$selectFromMatrixType, [string]$filter = "")
+function GenerateMatrix([MatrixConfig]$config, [string]$selectFromMatrixType, [string]$filter = ".*")
 {
     if ($selectFromMatrixType -eq "sparse") {
         [Array]$matrix = GenerateSparseMatrix $config.orderedMatrix $config.displayNamesLookup
