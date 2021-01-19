@@ -26,7 +26,7 @@ function CreateDisplayName([string]$parameter, [Hashtable]$displayNames)
     return $name
 }
 
-function GenerateMatrix([MatrixConfig]$config, [string]$selectFromMatrixType)
+function GenerateMatrix([MatrixConfig]$config, [string]$selectFromMatrixType, [string]$filter = "")
 {
     if ($selectFromMatrixType -eq "sparse") {
         [Array]$matrix = GenerateSparseMatrix $config.orderedMatrix $config.displayNamesLookup
@@ -43,7 +43,50 @@ function GenerateMatrix([MatrixConfig]$config, [string]$selectFromMatrixType)
         [Array]$matrix = ProcessIncludes $matrix $config.include $config.displayNamesLookup
     }
 
+    [Array]$matrix = FilterMatrixDisplayName $matrix $filter
     return $matrix
+}
+
+function FilterMatrixDisplayName([array]$matrix, [string]$filter) {
+    return $matrix | ForEach-Object {
+        if ($_.Name -match $filter) {
+            return $_
+        }
+    }
+}
+
+# Filters take the format of key=valueregex,key2=valueregex2
+function FilterMatrix([array]$matrix, [array]$filters) {
+    return $matrix | ForEach-Object {
+        if (MatchesFilters $_ $filters) {
+            return $_
+        }
+    }
+}
+
+function MatchesFilters([hashtable]$entry, [array]$filters) {
+    $nonMatching = $filters | ForEach-Object {
+        $key, $regex = ParseFilter $_
+        if ($key -eq "name" -and $entry.name -match $regex) {
+            return
+        } elseif ($entry.parameters.Contains($key) -and $entry.parameters[$key] -match $regex) {
+            return
+        }
+        return $false
+    }
+
+    return $null -eq $nonMatching
+}
+
+function ParseFilter([string]$filter) {
+    if ($filter -match "(.*?)=(.*)") {
+        $key = $matches[1]
+        $regex = $matches[2]
+    } else {
+        throw "Invalid filter: `"$filter`", expected key=regex format"
+    }
+
+    return $key, $regex
 }
 
 # Importing the JSON as PSCustomObject preserves key ordering,
@@ -193,7 +236,7 @@ function GenerateFullMatrix([OrderedDictionary] $parameters, [Hashtable]$display
     return $matrix.ToArray()
 }
 
-function CreateMatrixEntry([OrderedDictionary]$parameters, [Hashtable]$displayNames = @{})
+function CreateMatrixEntry([OrderedDictionary]$permutation, [Hashtable]$displayNames = @{})
 {
     $names = @()
     foreach ($key in $permutation.Keys) {
