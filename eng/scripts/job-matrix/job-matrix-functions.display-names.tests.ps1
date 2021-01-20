@@ -36,14 +36,25 @@ Describe "Matrix Filter" -Tag "filter" {
         @{ filterString = "operatingSystem=windows-2019"; expectedFirst = "windows2019_net461"; length = 4 }
         @{ filterString = "framework=.*"; expectedFirst = "windows2019_net461"; length = 12 }
         @{ filterString = "additionalArguments=mode=test"; expectedFirst = "windows2019_net461_modetest"; length = 6 }
+        @{ filterString = "additionalArguments=^$"; expectedFirst = "windows2019_net461"; length = 6 }
     ) {
         [array]$matrix = GenerateMatrix $config "all" -filters @($filterString)
         $matrix.Length | Should -Be $length
         $matrix[0].Name | Should -Be $expectedFirst
     }
 
+    It "Should handle multiple matrix key/value filters " {
+        [array]$matrix = GenerateMatrix $config "all" -filters "operatingSystem=windows.*","framework=.*","additionalArguments=mode=test"
+        $matrix.Length | Should -Be 2
+        $matrix[0].Name | Should -Be "windows2019_net461_modetest"
+    }
+
     It "Should handle no matrix key/value filter matches" {
         [array]$matrix = GenerateMatrix $config "all" -filters @("doesnot=exist")
         $matrix | Should -BeNullOrEmpty
+    }
+
+    It "Should handle invalid matrix key/value filter syntax" {
+        { GenerateMatrix $config "all" -filters @("invalid") } | Should -Throw
     }
 }
