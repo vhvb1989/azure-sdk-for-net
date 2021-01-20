@@ -26,8 +26,12 @@ function CreateDisplayName([string]$parameter, [Hashtable]$displayNames)
     return $name
 }
 
-function GenerateMatrix([MatrixConfig]$config, [string]$selectFromMatrixType, [string]$filter = ".*")
-{
+function GenerateMatrix(
+    [MatrixConfig]$config,
+    [string]$selectFromMatrixType,
+    [string]$displayNameFilter = ".*",
+    [array]$filters = @()
+) {
     if ($selectFromMatrixType -eq "sparse") {
         [Array]$matrix = GenerateSparseMatrix $config.orderedMatrix $config.displayNamesLookup
     } elseif ($selectFromMatrixType -eq "all") {
@@ -43,7 +47,8 @@ function GenerateMatrix([MatrixConfig]$config, [string]$selectFromMatrixType, [s
         [Array]$matrix = ProcessIncludes $matrix $config.include $config.displayNamesLookup
     }
 
-    [Array]$matrix = FilterMatrixDisplayName $matrix $filter
+    [Array]$matrix = FilterMatrixDisplayName $matrix $displayNameFilter
+    [Array]$matrix = FilterMatrix $matrix $filters
     return $matrix
 }
 
@@ -57,7 +62,7 @@ function FilterMatrixDisplayName([array]$matrix, [string]$filter) {
 
 # Filters take the format of key=valueregex,key2=valueregex2
 function FilterMatrix([array]$matrix, [array]$filters) {
-    return $matrix | ForEach-Object {
+    return $matrix = $matrix | ForEach-Object {
         if (MatchesFilters $_ $filters) {
             return $_
         }
@@ -67,9 +72,7 @@ function FilterMatrix([array]$matrix, [array]$filters) {
 function MatchesFilters([hashtable]$entry, [array]$filters) {
     $nonMatching = $filters | ForEach-Object {
         $key, $regex = ParseFilter $_
-        if ($key -eq "name" -and $entry.name -match $regex) {
-            return
-        } elseif ($entry.parameters.Contains($key) -and $entry.parameters[$key] -match $regex) {
+        if ($entry.parameters.Contains($key) -and $entry.parameters[$key] -match $regex) {
             return
         }
         return $false
@@ -97,11 +100,15 @@ function GetMatrixConfigFromJson($jsonConfig)
     $config.orderedMatrix = [OrderedDictionary]@{}
     $config.displayNamesLookup = @{}
 
-    $config.matrix.PSObject.Properties | ForEach-Object { 
-        $config.orderedMatrix.Add($_.Name, $_.Value)
+    if ($null -ne $config.matrix) {
+        $config.matrix.PSObject.Properties | ForEach-Object { 
+            $config.orderedMatrix.Add($_.Name, $_.Value)
+        }
     }
-    $config.displayNames.PSObject.Properties | ForEach-Object {
-        $config.displayNamesLookup.Add($_.Name, $_.Value)
+    if ($null -ne $config.displayNames) {
+        $config.displayNames.PSObject.Properties | ForEach-Object {
+            $config.displayNamesLookup.Add($_.Name, $_.Value)
+        }
     }
     $config.include = $config.include | Where-Object { $null -ne $_ } | ForEach-Object {
         $ordered = [OrderedDictionary]@{}
