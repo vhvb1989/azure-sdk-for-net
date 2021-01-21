@@ -49,7 +49,7 @@ jobs:
   - template: ./archetype-sdk-tests-jobs.yml
     parameters:
       UsePlatformContainer: true
-      Matrix: $[ dependencies.generate_matrix_${{ config.Name }}.outputs['generate_container_job_matrix_${{ config.Name }}.matrix'] ]
+      Matrix: dependencies.generate_matrix_${{ config.Name }}.outputs['generate_container_job_matrix_${{ config.Name }}.matrix']
       DependsOn: generate_matrix_${{ config.Name }}
       CloudConfig: ${{ parameters.CloudConfig }}
       ${{ each param in parameters.AdditionalParameters }}:
