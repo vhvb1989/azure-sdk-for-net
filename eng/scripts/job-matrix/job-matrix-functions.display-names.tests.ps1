@@ -1,7 +1,8 @@
-Import-Module ./job-matrix-functions.psm1 -Force
 Import-Module Pester
 
 BeforeAll {
+    . ./job-matrix-functions.ps1
+
     $matrixConfig = @"
 {
     "matrix": {
@@ -60,16 +61,11 @@ Describe "Matrix Filter" -Tag "filter" {
 
     It "Should filter by key exclude" {
         [array]$matrix = GenerateMatrix $config "all" -filters @("!operatingSystem")
-        $matrix.Length | Should -Be 0
+        $matrix | Should -BeNullOrEmpty
 
         [array]$matrix = GenerateMatrix $config "all"
         $matrix.Length | Should -Be 12
-        $matrix += @{
-            Name = "excludeme"
-            Parameters = [Ordered]@{
-                "foo" = 1
-            }
-        }
+        $matrix += @{ Name = "excludeme"; Parameters = [Ordered]@{ "foo" = 1 } }
         [array]$matrix = FilterMatrix $matrix @("!foo")
         $matrix.Length | Should -Be 12
     }

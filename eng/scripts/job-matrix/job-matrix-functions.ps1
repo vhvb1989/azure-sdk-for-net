@@ -60,18 +60,22 @@ function FilterMatrixDisplayName([array]$matrix, [string]$filter) {
 
 # Filters take the format of key=valueregex,key2=valueregex2
 function FilterMatrix([array]$matrix, [array]$filters) {
-    return $matrix = $matrix | ForEach-Object {
+    $matrix = $matrix | ForEach-Object {
         if (MatchesFilters $_ $filters) {
             return $_
         }
     }
+    return $matrix
 }
 
 function MatchesFilters([hashtable]$entry, [array]$filters) {
     $nonMatching = $filters | ForEach-Object {
         $key, $regex, $excludeKey = ParseFilter $_
         if ($excludeKey) {
-            return (-not $entry.parameters.Contains($key))
+            if (-not $entry.parameters.Contains($key)) {
+                return
+            }
+            return $false
         }
         if ($entry.parameters.Contains($key) -and $entry.parameters[$key] -match $regex) {
             return
