@@ -14,6 +14,7 @@ extends:
       - Name: identity_container
         Path: sdk/identity/platform-matrix.json
         Selection: all
+        GenerateContainerJobs: true
     ServiceDirectory: identity
     PreSteps:
       - pwsh: Install-Module -Name Az -Scope CurrentUser -AllowClobber -Force -Verbose
