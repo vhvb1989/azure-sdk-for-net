@@ -1,12 +1,10 @@
 Set-StrictMode -Version "4.0"
 
-class OrderedDictionary : System.Collections.Specialized.OrderedDictionary {}
-
 class MatrixConfig {
     [PSCustomObject]$displayNames
     [Hashtable]$displayNamesLookup
     [PSCustomObject]$matrix
-    [OrderedDictionary]$orderedMatrix
+    [System.Collections.Specialized.OrderedDictionary]$orderedMatrix
     [Array]$include
     [Array]$exclude
 }
@@ -101,7 +99,7 @@ function ParseFilter([string]$filter) {
 function GetMatrixConfigFromJson($jsonConfig)
 {
     [MatrixConfig]$config = $jsonConfig | ConvertFrom-Json
-    $config.orderedMatrix = [OrderedDictionary]@{}
+    $config.orderedMatrix = [ordered]@{}
     $config.displayNamesLookup = @{}
 
     if ($null -ne $config.matrix) {
@@ -115,14 +113,14 @@ function GetMatrixConfigFromJson($jsonConfig)
         }
     }
     $config.include = $config.include | Where-Object { $null -ne $_ } | ForEach-Object {
-        $ordered = [OrderedDictionary]@{}
+        $ordered = [ordered]@{}
         $_.PSObject.Properties | ForEach-Object {
             $ordered.Add($_.Name, $_.Value)
         }
         return $ordered
     }
     $config.exclude = $config.exclude | Where-Object { $null -ne $_ } | ForEach-Object {
-        $ordered = [OrderedDictionary]@{}
+        $ordered = [ordered]@{}
         $_.PSObject.Properties | ForEach-Object {
             $ordered.Add($_.Name, $_.Value)
         }
@@ -166,7 +164,7 @@ function ProcessIncludes([Array]$matrix, [Array]$includes, [Hashtable]$displayNa
     return $matrix
 }
 
-function MatrixElementMatch([OrderedDictionary]$source, [OrderedDictionary]$target)
+function MatrixElementMatch([System.Collections.Specialized.OrderedDictionary]$source, [System.Collections.Specialized.OrderedDictionary]$target)
 {
     if ($target.Count -eq 0) {
         return $false
@@ -181,9 +179,9 @@ function MatrixElementMatch([OrderedDictionary]$source, [OrderedDictionary]$targ
     return $true
 }
 
-function ConvertToMatrixArrayFormat([OrderedDictionary]$matrix)
+function ConvertToMatrixArrayFormat([System.Collections.Specialized.OrderedDictionary]$matrix)
 {
-    $converted = [OrderedDictionary]@{}
+    $converted = [Ordered]@{}
 
     foreach ($key in $matrix.Keys) {
         if ($matrix[$key] -isnot [Array]) {
@@ -198,9 +196,9 @@ function ConvertToMatrixArrayFormat([OrderedDictionary]$matrix)
 
 function SerializePipelineMatrix([Array]$matrix)
 {
-    $pipelineMatrix = [OrderedDictionary]@{}
+    $pipelineMatrix = [Ordered]@{}
     foreach ($entry in $matrix) {
-        $pipelineMatrix.Add($entry.name, [OrderedDictionary]@{})
+        $pipelineMatrix.Add($entry.name, [Ordered]@{})
         foreach ($key in $entry.parameters.Keys) {
             $pipelineMatrix[$entry.name].Add($key, $entry.parameters[$key])
         }
@@ -212,7 +210,7 @@ function SerializePipelineMatrix([Array]$matrix)
     }
 }
 
-function GenerateSparseMatrix([OrderedDictionary]$parameters, [Hashtable]$displayNames)
+function GenerateSparseMatrix([System.Collections.Specialized.OrderedDictionary]$parameters, [Hashtable]$displayNames)
 {
     [Array]$dimensions = GetMatrixDimensions $parameters
     $size = ($dimensions | Measure-Object -Maximum).Maximum
@@ -237,7 +235,7 @@ function GenerateSparseMatrix([OrderedDictionary]$parameters, [Hashtable]$displa
     return $sparseMatrix
 }
 
-function GenerateFullMatrix([OrderedDictionary] $parameters, [Hashtable]$displayNames = @{})
+function GenerateFullMatrix([System.Collections.Specialized.OrderedDictionary] $parameters, [Hashtable]$displayNames = @{})
 {
     $parameterArray = $parameters.GetEnumerator() | ForEach-Object { $_ }
 
@@ -247,7 +245,7 @@ function GenerateFullMatrix([OrderedDictionary] $parameters, [Hashtable]$display
     return $matrix.ToArray()
 }
 
-function CreateMatrixEntry([OrderedDictionary]$permutation, [Hashtable]$displayNames = @{})
+function CreateMatrixEntry([System.Collections.Specialized.OrderedDictionary]$permutation, [Hashtable]$displayNames = @{})
 {
     $names = @()
     foreach ($key in $permutation.Keys) {
@@ -273,7 +271,7 @@ function InitializeMatrix
         [Array]$parameters,
         [Hashtable]$displayNames,
         [System.Collections.ArrayList]$permutations,
-        [OrderedDictionary]$permutation = @{}
+        $permutation = [Ordered]@{}
     )
 
     if (!$parameters) {
@@ -284,7 +282,7 @@ function InitializeMatrix
 
     $head, $tail = $parameters
     foreach ($value in $head.value) {
-        $newPermutation = [OrderedDictionary]@{}
+        $newPermutation = [Ordered]@{}
         foreach ($element in $permutation.GetEnumerator()) {
             $newPermutation[$element.Name] = $element.Value
         }
@@ -293,7 +291,7 @@ function InitializeMatrix
     }
 }
 
-function GetMatrixDimensions([OrderedDictionary]$parameters)
+function GetMatrixDimensions([System.Collections.Specialized.OrderedDictionary]$parameters)
 {
     $dimensions = @()
     foreach ($val in $parameters.Values) {
