@@ -70,7 +70,8 @@ jobs:
       vmImage: $(OSVmImage)
 
     ${{ if eq(parameters.UsePlatformContainer, 'true') }}:
-      container: $[ variables['Container'] ]
+      # Add a default so the job doesn't fail when the matrix is empty
+      container: $[ coalesce(variables['Container'], 'ubuntu:bionic') ]
 
     steps:
       - ${{ parameters.PreSteps }}
