@@ -44,6 +44,15 @@ Describe "Matrix Filter" -Tag "filter" {
         $matrix[0].Name | Should -Be $expectedFirst
     }
 
+    It "Should filter by optional matrix key/value" -TestCases @(
+        @{ filterString = "?operatingSystem=windows.*"; expectedFirst = "windows2019_net461"; length = 4 }
+        @{ filterString = "?doesnotexist=.*"; expectedFirst = "windows2019_net461"; length = 12 }
+    ) {
+        [array]$matrix = GenerateMatrix $config "all" -filters @($filterString)
+        $matrix.Length | Should -Be $length
+        $matrix[0].Name | Should -Be $expectedFirst
+    }
+
     It "Should handle multiple matrix key/value filters " {
         [array]$matrix = GenerateMatrix $config "all" -filters "operatingSystem=windows.*","framework=.*","additionalArguments=mode=test"
         $matrix.Length | Should -Be 2
