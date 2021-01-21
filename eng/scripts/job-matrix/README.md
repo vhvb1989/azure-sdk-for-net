@@ -202,19 +202,21 @@ The top level keys are used as job names, meaning they get displayed in the azur
 
 The logic for generating display names works like this:
 
-1. Sort the matrix by: parameter length, parameter name, and sort the parameter values arrays.
-2. In sorted order, join parameter values by "_"
+- Join parameter values by "_"
     a. If the parameter value exists as a key in `displayNames` in the matrix config, replace it with that value.
-    b. For each name value, strip all `.-_` characters from the string.
-
-The matrix is then sorted by display name, before being sent to azure pipelines. The underlying matrix may have a different
-sorted order than the display name output. The sorting needs to be separate so that sparse matrix generation can be deterministic.
+    b. For each name value, strip all non-alphanumeric characters (excluding "_").
+	c. If the name is greater than 100 characters, truncate it.
 
 #### Filters
 
-To be implemented. A basic example of a filter is "all" vs. "sparse" generation, but eventually will be a more programmable
-way of processing excludes, such as an expression that only includes entries with a container image specified. The intent
-is that these filters can be entered at runtime, as opposed to statically in yaml.
+Filters can be passed to the matrix as an array of strings, each matching one of two formats below. Multiple filters
+get treated with the `and` operator.
+
+1. `<key>=<regex>` - This will find a matrix parameter matching <key> and include it if the value matches the regex filter.
+1. `!<key>` - This will exclude matrix entries that do not have the specified parameter.
+
+Display name filters can also be passed as a single regex string that runs against the [generated display name](#displaynames) of the matrix job.
+The intent of display name filters is to be defined primarily as a top level variable at template queue time in the azure pipelines UI.
 
 #### Under the hood
 
