@@ -71,7 +71,10 @@ function FilterMatrix([array]$matrix, [array]$filters) {
 
 function MatchesFilters([hashtable]$entry, [array]$filters) {
     $nonMatching = $filters | ForEach-Object {
-        $key, $regex = ParseFilter $_
+        $key, $regex, $excludeKey = ParseFilter $_
+        if ($excludeKey) {
+            return (-not $entry.parameters.Contains($key))
+        }
         if ($entry.parameters.Contains($key) -and $entry.parameters[$key] -match $regex) {
             return
         }
@@ -82,14 +85,15 @@ function MatchesFilters([hashtable]$entry, [array]$filters) {
 }
 
 function ParseFilter([string]$filter) {
-    if ($filter -match "(.*?)=(.*)") {
+    if ($filter -match "\!(.*)") {
+        return $matches[1], "", $true
+    } elseif ($filter -match "(.*?)=(.*)") {
         $key = $matches[1]
         $regex = $matches[2]
+        return $key, $regex, $false
     } else {
-        throw "Invalid filter: `"$filter`", expected key=regex format"
+        throw "Invalid filter: `"$filter`", expected !<key> or <key>=<regex> format"
     }
-
-    return $key, $regex
 }
 
 # Importing the JSON as PSCustomObject preserves key ordering,
@@ -101,7 +105,7 @@ function GetMatrixConfigFromJson($jsonConfig)
     $config.displayNamesLookup = @{}
 
     if ($null -ne $config.matrix) {
-        $config.matrix.PSObject.Properties | ForEach-Object { 
+        $config.matrix.PSObject.Properties | ForEach-Object {
             $config.orderedMatrix.Add($_.Name, $_.Value)
         }
     }

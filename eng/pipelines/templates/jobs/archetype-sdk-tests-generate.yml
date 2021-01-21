@@ -23,7 +23,7 @@ jobs:
             -ConfigPath ${{ config.Path }} `
             -Selection ${{ config.Selection }} `
             -DisplayNameFilter "$(filter)" `
-            -Filters @("container!=*")
+            -Filters @("!container")
         name: generate_job_matrix_${{ config.Name }}
         displayName: Generate Job Matrix
       - pwsh: |

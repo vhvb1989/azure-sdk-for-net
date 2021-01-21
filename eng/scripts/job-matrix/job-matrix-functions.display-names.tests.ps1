@@ -57,4 +57,9 @@ Describe "Matrix Filter" -Tag "filter" {
     It "Should handle invalid matrix key/value filter syntax" {
         { GenerateMatrix $config "all" -filters @("invalid") } | Should -Throw
     }
+
+    It "Should filter by key exclude" {
+        [array]$matrix = GenerateMatrix $config "all" -filters @("!operatingSystem")
+        $matrix.Length | Should -Be 0
+    }
 }
