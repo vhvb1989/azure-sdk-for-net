@@ -19,7 +19,7 @@ jobs:
     steps:
       - ${{ if eq(config.RunOnVM, 'true') }}:
         - pwsh: |
-            Write-Host "FILTER: $(filter)"
+            Write-Host "DISPLAY NAME FILTER: $(displayNameFilter)"
             eng/scripts/job-matrix/Create-JobMatrix.ps1 `
               -ConfigPath ${{ config.Path }} `
               -Selection ${{ config.Selection }} `
@@ -30,7 +30,7 @@ jobs:
 
       - ${{ if eq(config.RunOnContainer, 'true') }}:
         - pwsh: |
-            Write-Host "FILTER: $(filter)"
+            Write-Host "DISPLAY NAME FILTER: $(displayNameFilter)"
             eng/scripts/job-matrix/Create-JobMatrix.ps1 `
               -ConfigPath ${{ config.Path }} `
               -Selection ${{ config.Selection }} `

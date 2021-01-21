@@ -4,7 +4,7 @@
       "Container": "ubuntu_netcore_keyring",
       "OSVmImage": "ubuntu-18.04",
       "TestTargetFramework": "netcoreapp2.1",
-      "SupportedClouds": "Public,Canary,Preview"
+      "SupportedClouds": "Public"
     }
   ]
 }
