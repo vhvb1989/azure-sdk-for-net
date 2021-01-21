@@ -3,13 +3,10 @@
     "/p:UseProjectReferenceToAzureClients=true": "UseProjectRef"
   },
   "matrix": {
-    "OsVmImage": [
-      "windows-2019",
-      "ubuntu-18.04"
-    ],
+    "OSVmImage": "windows-2019",
     "TestTargetFramework": [
-      "net461",
       "netcoreapp2.1",
+      "net461",
       "net50"
     ],
     "AdditionalTestArguments": [
@@ -18,6 +15,10 @@
     ]
   },
   "include": [
+    {
+      "OSVmImage": "ubuntu-18.04",
+      "TestTargetFramework": "netcoreapp2.1"
+    },
     {
       "OSVmImage": "macOS-10.15",
       "TestTargetFramework": "netcoreapp2.1",

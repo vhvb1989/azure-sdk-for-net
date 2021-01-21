@@ -58,7 +58,6 @@ parameters:
     - Name: NET_live_test_base
       Path: eng/pipelines/templates/stages/platform-matrix.json
       Selection: sparse
-      RunOnVM: true
 - name: AdditionalMatrixConfigs
   type: object
   default: []
