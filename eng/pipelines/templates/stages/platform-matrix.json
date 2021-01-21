@@ -3,7 +3,9 @@
     "/p:UseProjectReferenceToAzureClients=true": "UseProjectRef"
   },
   "matrix": {
-    "OSVmImage": "windows-2019",
+    "OSVmImage": [
+      "windows-2019"
+    ],
     "TestTargetFramework": [
       "netcoreapp2.1",
       "net461",
