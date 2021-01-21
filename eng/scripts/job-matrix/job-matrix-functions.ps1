@@ -259,8 +259,13 @@ function GenerateFullMatrix([System.Collections.Specialized.OrderedDictionary] $
 function CreateMatrixEntry([System.Collections.Specialized.OrderedDictionary]$permutation, [Hashtable]$displayNames = @{})
 {
     $names = @()
-    foreach ($key in $permutation.Keys) {
-        $nameSegment = CreateDisplayName $permutation[$key] $displayNames
+    foreach ($entry in $permutation.GetEnumerator()) {
+        if ($entry.Value -is [String]) {
+            $nameSegment = CreateDisplayName $entry.Value $displayNames
+        } elseif ($entry.Value -is [PSCustomObject]) {
+            # TODO inspect what's here
+            $nameSegment = CreateDisplayName $entry.Name $displayNames
+        }
         if ($nameSegment) {
             $names += $nameSegment
         }
@@ -270,9 +275,24 @@ function CreateMatrixEntry([System.Collections.Specialized.OrderedDictionary]$pe
     if ($name.Length -gt 100) {
         $name = $name[0..99] -join ""
     }
+
+    $splattedParameters = [Ordered]@{}
+
+    foreach ($entry in $permutation.GetEnumerator()) {
+        if ($entry.Value -is [String]) {
+            $splattedParameters.Add($entry.Name, $entry.Value)
+        } elseif ($entry.Value -is [PSCustomObject]) {
+            foreach ($toSplat in $entry.Value.PSObject.Properties) {
+                $splattedParameters.Add($toSplat.Name, $toSplat.Value)
+            }
+        } else {
+            throw "Invalid type [$($entry.GetType())] for entry $name. Expected string or object."
+        }
+    }
+
     return @{
         name = $name
-        parameters = $permutation
+        parameters = $splattedParameters
     }
 }
 

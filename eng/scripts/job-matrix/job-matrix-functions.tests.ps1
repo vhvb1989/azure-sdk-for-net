@@ -489,3 +489,42 @@ Describe "Platform Matrix Post Transformation" -Tag "transform" {
         $matrix[7].parameters.additionalArguments | Should -Be "--enableWindowsFoo"
     }
 }
+
+Describe "Platform Matrix Generation With Object Fields" -Tag "objectfields" {
+    BeforeEach {
+        $matrixConfigForObject = @"
+{
+    "matrix": {
+        "testObject": {
+            "testObjectName": { "testObjectValue1": "1", "testObjectValue2": "2" }
+        },
+        "testField": [ "footest", "bartest" ]
+    },
+    "include": [
+      {
+        "testObjectInclude": {
+            "testObjectIncludeName": { "testObjectValue1": "1", "testObjectValue2": "2" }
+        },
+        "testField": "footest"
+      }
+    ]
+}
+"@
+        $objectFieldConfig = GetMatrixConfigFromJson $matrixConfigForObject
+    }
+
+    It "Should splat matrix entries that are objects into key/values" {
+        [Array]$matrix = GenerateMatrix $objectFieldConfig "all"
+        $matrix.Length | Should -Be 3
+
+        $matrix[0].name | Should -Be "testObjectName_footest"
+        $matrix[0].parameters.testField | Should -Be "footest"
+        $matrix[0].parameters.testObjectValue1 | Should -Be "1"
+        $matrix[0].parameters.testObjectValue2 | Should -Be "2"
+
+        $matrix[2].name | Should -Be "testObjectIncludeName_footest"
+        $matrix[2].parameters.testField | Should -Be "footest"
+        $matrix[2].parameters.testObjectValue1 | Should -Be "1"
+        $matrix[2].parameters.testObjectValue2 | Should -Be "2"
+    }
+}
