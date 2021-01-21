@@ -122,3 +122,4 @@ stages:
             CloudConfig:
               SubscriptionConfiguration: ${{ cloud.value.SubscriptionConfiguration }}
               Location: ${{ coalesce(parameters.Location, cloud.value.Location) }}
+              Cloud: ${{ cloud.key }}

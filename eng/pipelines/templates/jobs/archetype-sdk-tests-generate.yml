@@ -12,7 +12,7 @@ jobs:
 - ${{ each config in parameters.MatrixConfigs }}:
   - job: generate_matrix_${{ config.Name }}
     variables:
-      filter: $[ coalesce(variables.jobMatrixFilter, '.*') ]
+      displayNameFilter: $[ coalesce(variables.jobMatrixFilter, '.*') ]
     pool:
       vmImage: "ubuntu-18.04"
     displayName: Generate ${{ config.Name }} matrix
@@ -22,8 +22,8 @@ jobs:
           eng/scripts/job-matrix/Create-JobMatrix.ps1 `
             -ConfigPath ${{ config.Path }} `
             -Selection ${{ config.Selection }} `
-            -DisplayNameFilter "$(filter)" `
-            -Filters @("!container")
+            -DisplayNameFilter "$(displayNameFilter)" `
+            -Filters @("!container", "SupportedClouds=${{ parameters.CloudConfig.Cloud }}")
         name: generate_job_matrix_${{ config.Name }}
         displayName: Generate Job Matrix
 
@@ -33,8 +33,8 @@ jobs:
             eng/scripts/job-matrix/Create-JobMatrix.ps1 `
               -ConfigPath ${{ config.Path }} `
               -Selection ${{ config.Selection }} `
-              -DisplayNameFilter "$(filter)" `
-              -Filters @("container=.*")
+              -DisplayNameFilter "$(displayNameFilter)" `
+              -Filters @("container=.*", "SupportedClouds=${{ parameters.CloudConfig.Cloud }}")
           name: generate_container_job_matrix_${{ config.Name }}
           displayName: Generate Container Job Matrix
 
