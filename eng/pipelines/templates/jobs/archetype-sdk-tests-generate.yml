@@ -17,17 +17,18 @@ jobs:
       vmImage: "ubuntu-18.04"
     displayName: Generate ${{ config.Name }} matrix
     steps:
-      - pwsh: |
-          Write-Host "FILTER: $(filter)"
-          eng/scripts/job-matrix/Create-JobMatrix.ps1 `
-            -ConfigPath ${{ config.Path }} `
-            -Selection ${{ config.Selection }} `
-            -DisplayNameFilter "$(displayNameFilter)" `
-            -Filters @("!container", "SupportedClouds=${{ parameters.CloudConfig.Cloud }}")
-        name: generate_job_matrix_${{ config.Name }}
-        displayName: Generate Job Matrix
+      - ${{ if eq(config.RunOnVM, 'true') }}:
+        - pwsh: |
+            Write-Host "FILTER: $(filter)"
+            eng/scripts/job-matrix/Create-JobMatrix.ps1 `
+              -ConfigPath ${{ config.Path }} `
+              -Selection ${{ config.Selection }} `
+              -DisplayNameFilter "$(displayNameFilter)" `
+              -Filters @("!container", "SupportedClouds=${{ parameters.CloudConfig.Cloud }}")
+          name: generate_job_matrix_${{ config.Name }}
+          displayName: Generate Job Matrix
 
-      - ${{ if eq(config.EnableContainer, 'true') }}:
+      - ${{ if eq(config.RunOnContainer, 'true') }}:
         - pwsh: |
             Write-Host "FILTER: $(filter)"
             eng/scripts/job-matrix/Create-JobMatrix.ps1 `
@@ -38,16 +39,17 @@ jobs:
           name: generate_container_job_matrix_${{ config.Name }}
           displayName: Generate Container Job Matrix
 
-  - template: ./archetype-sdk-tests-jobs.yml
-    parameters:
-      UsePlatformContainer: false
-      Matrix: $[ dependencies.generate_matrix_${{ config.Name }}.outputs['generate_job_matrix_${{ config.Name }}.matrix'] ]
-      DependsOn: generate_matrix_${{ config.Name }}
-      CloudConfig: ${{ parameters.CloudConfig }}
-      ${{ each param in parameters.AdditionalParameters }}:
-        ${{ param.key }}: ${{ param.value }}
+  - ${{ if eq(config.RunOnVM, 'true') }}:
+    - template: ./archetype-sdk-tests-jobs.yml
+      parameters:
+        UsePlatformContainer: false
+        Matrix: $[ dependencies.generate_matrix_${{ config.Name }}.outputs['generate_job_matrix_${{ config.Name }}.matrix'] ]
+        DependsOn: generate_matrix_${{ config.Name }}
+        CloudConfig: ${{ parameters.CloudConfig }}
+        ${{ each param in parameters.AdditionalParameters }}:
+          ${{ param.key }}: ${{ param.value }}
 
-  - ${{ if eq(config.EnableContainer, 'true') }}:
+  - ${{ if eq(config.RunOnContainer, 'true') }}:
     - template: ./archetype-sdk-tests-jobs.yml
       parameters:
         UsePlatformContainer: true

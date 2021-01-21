@@ -38,9 +38,11 @@ jobs:
       - Name: base_product_matrix
         Path: /eng/pipelines/matrix.json
         Selection: sparse
+		RunOnVM: true
       - Name: sdk_specific_matrix
         Path: /sdk/foobar/matrix.json
         Selection: all
+		RunOnContainer: true
 	steps:
 	  - pwsh:
           ...
