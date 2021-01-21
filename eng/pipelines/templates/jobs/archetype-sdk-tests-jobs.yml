@@ -50,7 +50,7 @@ jobs:
     condition: ne(${{ parameters.Matrix }}, '{}')
     strategy:
       maxParallel: ${{ parameters.MaxParallel }}
-      matrix: ${{ parameters.Matrix }}
+      matrix: $[ ${{ parameters.Matrix }} ]
 
     variables:
       - template: ../variables/globals.yml
