@@ -326,13 +326,13 @@ Describe "Platform Matrix Generation" -Tag "generate" {
     }
 
     It "Should enforce valid display name format" {
-        $generateconfig.displayNamesLookup["net461"] = '_123.Some.456.Invalid_format-name$(foo)'
+        $generateconfig.displayNamesLookup["net461"] = '123.Some.456.Invalid_format-name$(foo)'
         $generateconfig.displayNamesLookup["netcoreapp2.1"] = (New-Object string[] 150) -join "a"
         $dimensions = GetMatrixDimensions $generateConfig.orderedMatrix
         $matrix = GenerateFullMatrix $generateconfig.orderedMatrix $generateconfig.displayNamesLookup
 
         $element = GetNdMatrixElement @(0, 0, 0) $matrix $dimensions
-        $element.name | Should -Be "windows2019_some456invalid_formatnamefoo"
+        $element.name | Should -Be "windows2019_123some456invalid_formatnamefoo"
 
         $element = GetNdMatrixElement @(1, 1, 1) $matrix $dimensions
         $element.name.Length | Should -Be 100

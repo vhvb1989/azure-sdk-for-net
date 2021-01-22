@@ -255,6 +255,11 @@ function GenerateSparseMatrix([System.Collections.Specialized.OrderedDictionary]
 
 function GenerateFullMatrix([System.Collections.Specialized.OrderedDictionary] $parameters, [Hashtable]$displayNameLookups = @{})
 {
+    # Handle when the config does not have a matrix specified (e.g. only the include field is specified)
+    if ($parameters.Count -eq 0) {
+        return @()
+    }
+
     $parameterArray = $parameters.GetEnumerator() | ForEach-Object { $_ }
 
     $matrix = [System.Collections.ArrayList]::new()
@@ -313,7 +318,7 @@ function InitializeMatrix
         $permutation = [Ordered]@{}
     )
 
-    if (!$parameters) {
+    if (-not $parameters) {
         $entry = CreateMatrixEntry $permutation $displayNameLookups
         $permutations.Add($entry) | Out-Null
         return
