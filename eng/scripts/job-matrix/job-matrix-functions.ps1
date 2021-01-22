@@ -9,12 +9,12 @@ class MatrixConfig {
     [Array]$exclude
 }
 
-function CreateDisplayName([string]$parameter, [Hashtable]$displayNames)
+function CreateDisplayName([string]$parameter, [Hashtable]$displayNamesLookup)
 {
     $name = $parameter.ToString()
 
-    if ($displayNames.ContainsKey($parameter)) {
-        $name = $displayNames[$parameter]
+    if ($displayNamesLookup.ContainsKey($parameter)) {
+        $name = $displayNamesLookup[$parameter]
     }
 
     # Matrix naming restrictions:
@@ -163,11 +163,11 @@ function ProcessExcludes([Array]$matrix, [Array]$excludes)
     return $matrix | Where-Object { !$_.parameters.Contains($deleteKey) }
 }
 
-function ProcessIncludes([Array]$matrix, [Array]$includes, [Hashtable]$displayNames)
+function ProcessIncludes([Array]$matrix, [Array]$includes, [Hashtable]$displayNamesLookup)
 {
     foreach ($inclusion in $includes) {
         $converted = ConvertToMatrixArrayFormat $inclusion
-        $full = GenerateFullMatrix $converted $displayNames
+        $full = GenerateFullMatrix $converted $displayNamesLookup
         $matrix += $full
     }
 
@@ -228,12 +228,12 @@ function SerializePipelineMatrix([Array]$matrix)
     }
 }
 
-function GenerateSparseMatrix([System.Collections.Specialized.OrderedDictionary]$parameters, [Hashtable]$displayNames)
+function GenerateSparseMatrix([System.Collections.Specialized.OrderedDictionary]$parameters, [Hashtable]$displayNamesLookup)
 {
     [Array]$dimensions = GetMatrixDimensions $parameters
     $size = ($dimensions | Measure-Object -Maximum).Maximum
 
-    [Array]$matrix = GenerateFullMatrix $parameters $displayNames
+    [Array]$matrix = GenerateFullMatrix $parameters $displayNamesLookup
     $sparseMatrix = @()
 
     # With full matrix, retrieve items by doing diagonal lookups across the matrix N times.
@@ -253,7 +253,7 @@ function GenerateSparseMatrix([System.Collections.Specialized.OrderedDictionary]
     return $sparseMatrix
 }
 
-function GenerateFullMatrix([System.Collections.Specialized.OrderedDictionary] $parameters, [Hashtable]$displayNameLookups = @{})
+function GenerateFullMatrix([System.Collections.Specialized.OrderedDictionary] $parameters, [Hashtable]$displayNamesLookup = @{})
 {
     # Handle when the config does not have a matrix specified (e.g. only the include field is specified)
     if ($parameters.Count -eq 0) {
@@ -263,12 +263,12 @@ function GenerateFullMatrix([System.Collections.Specialized.OrderedDictionary] $
     $parameterArray = $parameters.GetEnumerator() | ForEach-Object { $_ }
 
     $matrix = [System.Collections.ArrayList]::new()
-    InitializeMatrix $parameterArray $displayNameLookups $matrix
+    InitializeMatrix $parameterArray $displayNamesLookup $matrix
 
     return $matrix.ToArray()
 }
 
-function CreateMatrixEntry([System.Collections.Specialized.OrderedDictionary]$permutation, [Hashtable]$displayNameLookups = @{})
+function CreateMatrixEntry([System.Collections.Specialized.OrderedDictionary]$permutation, [Hashtable]$displayNamesLookup = @{})
 {
     $names = @()
     $splattedParameters = [Ordered]@{}
@@ -277,12 +277,12 @@ function CreateMatrixEntry([System.Collections.Specialized.OrderedDictionary]$pe
         $nameSegment = ""
 
         if ($entry.Value -is [PSCustomObject]) {
-            $nameSegment = CreateDisplayName $entry.Name $displayNameLookups
+            $nameSegment = CreateDisplayName $entry.Name $displayNamesLookup
             foreach ($toSplat in $entry.Value.PSObject.Properties) {
                 $splattedParameters.Add($toSplat.Name, $toSplat.Value)
             }
         } else {
-            $nameSegment = CreateDisplayName $entry.Value $displayNameLookups
+            $nameSegment = CreateDisplayName $entry.Value $displayNamesLookup
             $splattedParameters.Add($entry.Name, $entry.Value)
         }
 
@@ -313,13 +313,13 @@ function InitializeMatrix
 {
     param(
         [Array]$parameters,
-        [Hashtable]$displayNameLookups,
+        [Hashtable]$displayNamesLookup,
         [System.Collections.ArrayList]$permutations,
         $permutation = [Ordered]@{}
     )
 
     if (-not $parameters) {
-        $entry = CreateMatrixEntry $permutation $displayNameLookups
+        $entry = CreateMatrixEntry $permutation $displayNamesLookup
         $permutations.Add($entry) | Out-Null
         return
     }
@@ -331,11 +331,11 @@ function InitializeMatrix
             foreach ($nestedParameter in $value.PSObject.Properties) {
                 $nestedPermutation = CloneOrderedDictionary($newPermutation)
                 $nestedPermutation[$nestedParameter.Name] = $nestedParameter.Value
-                InitializeMatrix $tail $displayNameLookups $permutations $nestedPermutation
+                InitializeMatrix $tail $displayNamesLookup $permutations $nestedPermutation
             }
         } else {
             $newPermutation[$head.Name] = $value
-            InitializeMatrix $tail $displayNameLookups $permutations $newPermutation
+            InitializeMatrix $tail $displayNamesLookup $permutations $newPermutation
         }
     }
 }

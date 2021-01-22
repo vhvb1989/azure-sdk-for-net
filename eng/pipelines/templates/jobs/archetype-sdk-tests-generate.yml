@@ -15,7 +15,7 @@ jobs:
   pool:
     name: azsdk-pool-mms-ubuntu-1804-general
     vmImage: MMSUbuntu18.04
-  displayName: Generate job matrix
+  displayName: Generate Job Matrix
   steps:
     - ${{ each config in parameters.MatrixConfigs }}:
       - ${{ if eq(config.GenerateVMJobs, 'true') }}:
@@ -26,8 +26,8 @@ jobs:
               -Selection ${{ config.Selection }} `
               -DisplayNameFilter "$(displayNameFilter)" `
               -Filters @("!container", "?SupportedClouds=${{ parameters.CloudConfig.Cloud }}")
-          name: generate_job_matrix_${{ config.Name }}
-          displayName: Generate Job Matrix
+          name: generate_vm_job_matrix_${{ config.Name }}
+          displayName: Generate VM Job Matrix
 
       - ${{ if eq(config.GenerateContainerJobs, 'true') }}:
         - pwsh: |
@@ -45,7 +45,7 @@ jobs:
     - template: ./archetype-sdk-tests-jobs.yml
       parameters:
         UsePlatformContainer: false
-        Matrix: dependencies.generate_matrix.outputs['generate_job_matrix_${{ config.Name }}.matrix']
+        Matrix: dependencies.generate_matrix.outputs['generate_vm_job_matrix_${{ config.Name }}.matrix']
         DependsOn: generate_matrix
         CloudConfig: ${{ parameters.CloudConfig }}
         ${{ each param in parameters.AdditionalParameters }}:

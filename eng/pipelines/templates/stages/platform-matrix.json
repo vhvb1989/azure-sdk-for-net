@@ -31,7 +31,12 @@
       "TestTargetFramework": "netcoreapp2.1"
     },
     {
-      "OSVmImage": "macOS-10.15",
+      "Agent": {
+        "macOS-10.15": {
+          "OSVmImage": "macOS-10.15",
+          "Pool": "Azure Pipelines"
+        }
+      },
       "TestTargetFramework": "netcoreapp2.1",
       "SupportedClouds": "Public"
     },
