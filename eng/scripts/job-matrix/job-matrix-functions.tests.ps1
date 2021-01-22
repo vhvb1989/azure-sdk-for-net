@@ -496,7 +496,8 @@ Describe "Platform Matrix Generation With Object Fields" -Tag "objectfields" {
 {
     "matrix": {
         "testObject": {
-            "testObjectName": { "testObjectValue1": "1", "testObjectValue2": "2" }
+            "testObjectName1": { "testObject1Value1": "1", "testObject1Value2": "2" },
+            "testObjectName2": { "testObject2Value1": "1", "testObject2Value2": "2" }
         },
         "testField": [ "footest", "bartest" ]
     },
@@ -515,16 +516,24 @@ Describe "Platform Matrix Generation With Object Fields" -Tag "objectfields" {
 
     It "Should splat matrix entries that are objects into key/values" {
         [Array]$matrix = GenerateMatrix $objectFieldConfig "all"
-        $matrix.Length | Should -Be 3
+        $matrix.Length | Should -Be 5
 
-        $matrix[0].name | Should -Be "testObjectName_footest"
+        $matrix[0].name | Should -Be "testObjectName1_footest"
         $matrix[0].parameters.testField | Should -Be "footest"
-        $matrix[0].parameters.testObjectValue1 | Should -Be "1"
-        $matrix[0].parameters.testObjectValue2 | Should -Be "2"
+        $matrix[0].parameters.testObject1Value1 | Should -Be "1"
+        $matrix[0].parameters.testObject1Value2 | Should -Be "2"
+        $matrix[0].parameters.Count | Should -Be 3
 
-        $matrix[2].name | Should -Be "testObjectIncludeName_footest"
-        $matrix[2].parameters.testField | Should -Be "footest"
-        $matrix[2].parameters.testObjectValue1 | Should -Be "1"
-        $matrix[2].parameters.testObjectValue2 | Should -Be "2"
+        $matrix[3].name | Should -Be "testObjectName2_bartest"
+        $matrix[3].parameters.testField | Should -Be "bartest"
+        $matrix[3].parameters.testObject2Value1 | Should -Be "1"
+        $matrix[3].parameters.testObject2Value2 | Should -Be "2"
+        $matrix[3].parameters.Count | Should -Be 3
+
+        $matrix[4].name | Should -Be "testObjectIncludeName_footest"
+        $matrix[4].parameters.testField | Should -Be "footest"
+        $matrix[4].parameters.testObjectValue1 | Should -Be "1"
+        $matrix[4].parameters.testObjectValue2 | Should -Be "2"
+        $matrix[4].parameters.Count | Should -Be 3
     }
 }
