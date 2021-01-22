@@ -50,10 +50,23 @@ jobs:
 
 ## Matrix config file syntax
 
+Matrix parameters can either be a list of strings, or a set of grouped strings (represented as a hash). The latter parameter
+type is useful for when 2 or more parameters need to be grouped together, but without generating more than one matrix permutation.
+
 ```
 "matrix": {
   "<parameter1 name>": [ <values...> ],
-  "<parameter2 name>": [ <values...> ]
+  "<parameter2 name>": [ <values...> ],
+  "<parameter set>": {
+	"<parameter set 1 name>": {
+		"<parameter set 1 value 1": "value",
+		"<parameter set 1 value 2": "<value>",
+	},
+	"<parameter set 2 name>": {
+		"<parameter set 2 value 1": "value",
+		"<parameter set 2 value 2": "<value>",
+	}
+  }
 }
 "include": [ <matrix>, <matrix>, ... ],
 "exclude": [ <matrix>, <matrix>, ... ],
@@ -211,14 +224,25 @@ The logic for generating display names works like this:
 
 #### Filters
 
-Filters can be passed to the matrix as an array of strings, each matching one of two formats below. Multiple filters
+Filters can be passed to the matrix as an array of strings, each matching one of three formats below. Multiple filters
 get treated with the `and` operator.
 
-1. `<key>=<regex>` - This will find a matrix parameter matching <key> and include it if the value matches the regex filter.
-1. `!<key>` - This will exclude matrix entries that do not have the specified parameter.
+1. `<key>=<regex>` - This will find a matrix parameter matching <key> and include it if the key exists and the value matches the regex filter.
+1. `?<key>=<regex>` - This will find a matrix parameter matching <key> and include it if the value matches the regex filter or the key does not exist.
+1. `!<key>` - This will exclude matrix entries that do not have the specified key.
 
 Display name filters can also be passed as a single regex string that runs against the [generated display name](#displaynames) of the matrix job.
 The intent of display name filters is to be defined primarily as a top level variable at template queue time in the azure pipelines UI.
+
+For example:
+
+```
+./Create-JobMatrix.ps1 `
+  -ConfigPath samples/matrix.json `
+  -Selection all `
+  -DisplayNameFilter ".*windows.*" `
+  -Filters @("!ExcludedKey", "framework=(461|5\.0)", "?SupportedClouds=.*Public.*")
+```
 
 #### Under the hood
 
