@@ -1,6 +1,7 @@
 {
   "displayNames": {
-    "/p:UseProjectReferenceToAzureClients=true": "UseProjectRef"
+    "/p:UseProjectReferenceToAzureClients=true": "UseProjectRef",
+    "true": "Record"
   },
   "matrix": {
     "Agent": {
@@ -21,7 +22,6 @@
   },
   "include": [
     {
-      "OSVmImage": "ubuntu-18.04",
       "Agent": {
         "ubuntu-18.04": {
           "OSVmImage": "MMSUbuntu18.04",

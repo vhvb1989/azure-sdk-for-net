@@ -11,7 +11,7 @@ class MatrixConfig {
 
 function CreateDisplayName([string]$parameter, [Hashtable]$displayNames)
 {
-    $name = $parameter
+    $name = $parameter.ToString()
 
     if ($displayNames.ContainsKey($parameter)) {
         $name = $displayNames[$parameter]
@@ -19,7 +19,6 @@ function CreateDisplayName([string]$parameter, [Hashtable]$displayNames)
 
     # Matrix naming restrictions:
     # https://docs.microsoft.com/en-us/azure/devops/pipelines/process/phases?view=azure-devops&tabs=yaml#multi-job-configuration
-    $name = $name -replace "^[^A-Za-z]*", ""  # strip leading digits
     $name = $name -replace "[^A-Za-z0-9_]", ""
     return $name
 }
@@ -270,23 +269,33 @@ function CreateMatrixEntry([System.Collections.Specialized.OrderedDictionary]$pe
     $splattedParameters = [Ordered]@{}
 
     foreach ($entry in $permutation.GetEnumerator()) {
-        if ($entry.Value -is [String]) {
-            $nameSegment = CreateDisplayName $entry.Value $displayNameLookups
-            $splattedParameters.Add($entry.Name, $entry.Value)
-        } elseif ($entry.Value -is [PSCustomObject]) {
+        $nameSegment = ""
+
+        if ($entry.Value -is [PSCustomObject]) {
             $nameSegment = CreateDisplayName $entry.Name $displayNameLookups
             foreach ($toSplat in $entry.Value.PSObject.Properties) {
                 $splattedParameters.Add($toSplat.Name, $toSplat.Value)
             }
+        } else {
+            $nameSegment = CreateDisplayName $entry.Value $displayNameLookups
+            $splattedParameters.Add($entry.Name, $entry.Value)
         }
+
         if ($nameSegment) {
             $names += $nameSegment
         }
     }
+
     # The maximum allowed matrix name length is 100 characters
     $name = $names -join "_"
     if ($name.Length -gt 100) {
         $name = $name[0..99] -join ""
+    }
+    $stripped = $name -replace "^[^A-Za-z]*", ""  # strip leading digits
+    if ($stripped -eq "") {
+        $name = "job_" + $name  # Handle names that consist entirely of numbers
+    } else {
+        $name = $stripped
     }
 
     return @{
